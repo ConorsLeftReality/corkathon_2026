@@ -6,12 +6,16 @@ import type { FilingReport } from '#src/features/filings/filings-api.ts'
 type Loadable<T> =
   { status: 'loading' } | { status: 'ready'; value: T } | { status: 'error'; message: string }
 
-function messageOf(error: unknown): string {
-  if (error instanceof ApiError) return error.message
-  throw error
-}
+export function useFilings(onSessionLost: () => void) {
+  const messageOf = useCallback(
+    (error: unknown): string => {
+      if (!(error instanceof ApiError)) throw error
+      if (error.status === 401) onSessionLost()
+      return error.message
+    },
+    [onSessionLost],
+  )
 
-export function useFilings() {
   const [report, setReport] = useState<Loadable<FilingReport>>({ status: 'loading' })
   const [briefing, setBriefing] = useState<Loadable<string>>({ status: 'loading' })
   const [rebuilding, setRebuilding] = useState(false)
@@ -24,7 +28,7 @@ export function useFilings() {
     } catch (error) {
       setBriefing({ status: 'error', message: messageOf(error) })
     }
-  }, [])
+  }, [messageOf])
 
   const load = useCallback(async () => {
     setReport({ status: 'loading' })
@@ -34,7 +38,7 @@ export function useFilings() {
     } catch (error) {
       setReport({ status: 'error', message: messageOf(error) })
     }
-  }, [loadBriefing])
+  }, [loadBriefing, messageOf])
 
   useEffect(() => {
     void load()
