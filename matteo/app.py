@@ -27,9 +27,11 @@ column is used. Extra columns are ignored.
 
 import argparse
 import csv
+import hmac
 import io
 import json
 import os
+import sys
 import urllib.request
 import zipfile
 from datetime import date, datetime, timedelta
@@ -46,7 +48,11 @@ BRIEFING_TXT = os.environ.get("BRIEFING_TXT", "briefing.txt")
 WINDOW_DAYS = int(os.environ.get("WINDOW_DAYS", "30"))   # "due soon" window
 GRACE_DAYS = 56                                          # return must reach CRO within 56 days of the ARD
 ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "")    # empty sends no CORS header; the web app calls through the Vite proxy
-HOST = os.environ.get("HOST", "127.0.0.1")              # 0.0.0.0 only if another device must reach it
+HOST = os.environ.get("HOST", "127.0.0.1")              # 0.0.0.0 only together with FILINGS_TOKEN
+# requests must name this server in their Host header, which stops dns rebinding
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "")       # comma separated host:port, defaults to localhost
+# when set, every request needs an X-Filings-Token header with this value
+FILINGS_TOKEN = os.environ.get("FILINGS_TOKEN", "")
 
 CRO_SNAPSHOT_URL = (
     "https://opendata.cro.ie/dataset/bf6f837d-0946-4c14-9a99-82cd6980c121/"
@@ -294,13 +300,33 @@ def print_table(report):
 app = Flask(__name__)
 
 
+def allowed_hosts(port):
+    if ALLOWED_HOSTS:
+        return {h.strip().lower() for h in ALLOWED_HOSTS.split(",") if h.strip()}
+    return {f"127.0.0.1:{port}", f"localhost:{port}"}
+
+
+app.config["ALLOWED_HOSTS"] = allowed_hosts(os.environ.get("PORT", "5000"))
+
+
+@app.before_request
+def guard():
+    if request.host.lower() not in app.config["ALLOWED_HOSTS"]:
+        return jsonify({"error": "This host is not allowed."}), 403
+    if FILINGS_TOKEN:
+        sent = request.headers.get("X-Filings-Token", "")
+        if not hmac.compare_digest(sent.encode(), FILINGS_TOKEN.encode()):
+            return jsonify({"error": "Missing or wrong filings token."}), 401
+    return None
+
+
 @app.after_request
 def add_cors(resp):
     if not ALLOWED_ORIGIN:
         return resp
     resp.headers["Access-Control-Allow-Origin"] = ALLOWED_ORIGIN
     resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type, X-Filings-Token"
     return resp
 
 
@@ -378,4 +404,8 @@ if __name__ == "__main__":
     else:
         if args.snapshot:
             print_table(build_report(snapshot_path=args.snapshot, window_days=args.window))
+        app.config["ALLOWED_HOSTS"] = allowed_hosts(args.port)
+        if HOST != "127.0.0.1" and not FILINGS_TOKEN:
+            print("Refusing to listen beyond localhost without FILINGS_TOKEN set.")
+            sys.exit(1)
         app.run(host=HOST, port=args.port, debug=False)
