@@ -22,6 +22,7 @@ export default defineConfig(
       'apps/api/**',
       // copied from D:/dev/skills, fixes belong there
       'scripts/lint-*.ts',
+      'skills/**',
       'test-results/**',
       'playwright-report/**',
     ],

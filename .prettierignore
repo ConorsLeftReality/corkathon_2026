@@ -5,3 +5,5 @@ dist/
 apps/api/
 test-results/
 playwright-report/
+# copied from D:/dev/skills, fixes belong there
+skills/
