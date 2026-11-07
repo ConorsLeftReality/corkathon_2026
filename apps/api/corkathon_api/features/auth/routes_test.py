@@ -111,6 +111,17 @@ def test_production_cookies_are_secure(build_app: Callable[..., Flask]) -> None:
     assert all("Secure" in cookie for cookie in response.headers.getlist("Set-Cookie"))
 
 
+def test_cookie_secure_false_lets_an_http_deploy_keep_the_session(
+    build_app: Callable[..., Flask],
+) -> None:
+    client = build_app(app_env="production", cookie_secure=False).test_client()
+    response = client.post(
+        "/api/auth/register", json={"email": "ada@example.com", "password": PASSWORD}
+    )
+    assert not any("Secure" in cookie for cookie in response.headers.getlist("Set-Cookie"))
+    assert client.get("/api/auth/me").status_code == 200
+
+
 def test_login_is_rate_limited(build_app: Callable[..., Flask]) -> None:
     client = build_app(auth_rate_limit_per_minute=2).test_client()
     body = {"email": "ada@example.com", "password": "wrong password"}

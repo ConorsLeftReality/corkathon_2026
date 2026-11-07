@@ -194,6 +194,8 @@
     border-radius: var(--radius-sm);
     background-color: var(--color-rim);
     padding: 0.5rem 0.75rem;
+    /* ios safari zooms the whole page into any field under 16px and stays zoomed */
+    font-size: max(1rem, 1em);
   }
 
   .field[aria-invalid='true'] {

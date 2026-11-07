@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     jwt_secret_key: SecretStr = Field(min_length=32)
     # a relative sqlite path lands in apps/api/instance
     database_url: str = "sqlite:///corkathon.db"
+    # browsers drop secure cookies on plain http, so an http only deploy sets this false
+    cookie_secure: bool | None = None
     session_hours: int = Field(default=12, ge=1, le=720)
     auth_rate_limit_per_minute: int = Field(default=10, ge=1)
     # number of reverse proxies in front of the app, coolify is 1
