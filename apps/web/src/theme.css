@@ -24,24 +24,25 @@
   --color-*: initial;
   --color-white: #ffffff;
   --color-black: #000000;
-  /* ledger pad: green ruled paper, blue black ink, red ink for overdue */
+  /* dark green brand on pale green paper, red ink for overdue */
   --color-ink: #16201b;
   --color-graphite: #46544b;
   --color-haze: #74867a;
   --color-shell: #e8eee9;
   --color-rim: #ffffff;
   --color-rule: #b5c9bc;
-  --color-dither: #c3cde3;
-  --color-signal: #1f3d8f;
-  --color-signal-deep: #182f6e;
-  --color-signal-tint: #e4e9f5;
+  --color-dither: #bfd3c6;
+  --color-signal: #1b4a36;
+  --color-signal-deep: #123426;
+  --color-signal-tint: #e0ebe4;
   --color-edge-soft: #c9dccf;
-  --color-edge-cool: #5f7fc8;
+  --color-edge-cool: #3f8a68;
 
   /* outcomes only, never decoration. body size text uses the -deep shade to clear 4.5:1 */
-  --color-success: #0e8f63;
-  --color-success-deep: #0a6b4a;
-  --color-success-tint: #e4f5ee;
+  /* success is blue so a saved or copied message never reads as more brand green */
+  --color-success: #1d5fa8;
+  --color-success-deep: #174c87;
+  --color-success-tint: #e5eef8;
   --color-warning: #b06e00;
   --color-warning-deep: #8a5500;
   --color-warning-tint: #fbf1de;

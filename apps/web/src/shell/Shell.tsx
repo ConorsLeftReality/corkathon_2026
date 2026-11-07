@@ -37,7 +37,7 @@ export function Shell() {
           <Navigation />
         </DesktopSidebar>
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-line bg-shell px-4 py-2 sm:px-6 lg:px-10">
+          <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-line bg-shell px-4 py-2 sm:px-6 lg:px-8">
             <MobileSidebar>
               <Navigation />
             </MobileSidebar>
@@ -46,7 +46,7 @@ export function Shell() {
               Sign out
             </button>
           </header>
-          <main className="flex w-full flex-1 flex-col gap-6 px-4 py-8 sm:px-6 lg:px-10">
+          <main className="flex w-full flex-1 flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
             <Outlet />
           </main>
         </div>

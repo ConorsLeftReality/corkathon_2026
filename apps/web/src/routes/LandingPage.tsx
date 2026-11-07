@@ -1,7 +1,6 @@
 import { IconFileSearch, IconListCheck, IconPhoneCall, IconTargetArrow } from '@tabler/icons-react'
 import { Link } from 'react-router'
 import { BentoGrid, BentoGridItem } from '#src/components/ui/bento-grid'
-import { GlassBorderButton } from '#src/components/ui/glass-border-button'
 import { GlowingEffect } from '#src/components/ui/glowing-effect'
 import { MagneticButton } from '#src/components/ui/magnetic-button'
 import { Spotlight } from '#src/components/ui/spotlight'
@@ -41,7 +40,7 @@ const EXAMPLE_ROWS: RadarRow[] = [
   },
 ]
 
-const PAGE_GUTTER = 'mx-auto w-full max-w-[100rem] px-5 sm:px-8 lg:px-12'
+const PAGE_GUTTER = 'w-full px-4 sm:px-6 lg:px-8'
 
 function ProspectsArt() {
   return (
@@ -157,9 +156,12 @@ export function LandingPage() {
                 accountant.
               </p>
               <MagneticButton className="self-start">
-                <GlassBorderButton to="/app" className="h-12 px-7">
+                <Link
+                  to="/app"
+                  className="inline-flex h-12 items-center rounded-full bg-signal px-7 font-semibold text-rim no-underline hover:bg-signal-deep"
+                >
                   Open the app
-                </GlassBorderButton>
+                </Link>
               </MagneticButton>
             </div>
 
