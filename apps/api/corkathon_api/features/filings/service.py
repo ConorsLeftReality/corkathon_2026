@@ -22,7 +22,7 @@ CRO_SNAPSHOT_URL = (
     "https://opendata.cro.ie/dataset/bf6f837d-0946-4c14-9a99-82cd6980c121/"
     "resource/3fef41bc-b8f4-4b10-8434-ce51c29b1bba/download/companies.csv.zip"
 )
-# matteo's demo list, used until a my_companies.csv is put in the data folder
+# a demo list of public companies, used until a my_companies.csv is put in the data folder
 DEMO_COMPANY_NUMBERS = frozenset({"104547", "111471", "12965", "999999999"})
 
 Downloader = Callable[[Path], None]

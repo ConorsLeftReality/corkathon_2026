@@ -1,4 +1,4 @@
-"""cro filing report, ported from matteo/app.py so it runs inside the one deployed container"""
+"""cro filing report, built inside the one deployed container"""
 
 import csv
 import io
