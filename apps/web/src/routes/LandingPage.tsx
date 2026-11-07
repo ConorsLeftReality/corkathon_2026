@@ -1,4 +1,4 @@
-import { IconRadar2 } from '@tabler/icons-react'
+import { IconPhoneCall } from '@tabler/icons-react'
 import { Link } from 'react-router'
 import { Ledger } from '#src/features/radar/Ledger.tsx'
 import type { RadarRow } from '#src/features/radar/radar-api.ts'
@@ -64,8 +64,8 @@ export function LandingPage() {
     <div className="flex min-h-dvh flex-col">
       <header className="mx-auto flex w-full max-w-6xl items-center gap-3 px-4 py-5">
         <span className="flex items-center gap-2 font-semibold text-ink">
-          <IconRadar2 size={22} aria-hidden />
-          Filing Radar
+          <IconPhoneCall size={22} aria-hidden />
+          Dialed In
         </span>
         <Link to="/login" className="ml-auto text-label font-semibold">
           Sign in
@@ -79,7 +79,7 @@ export function LandingPage() {
               Know which companies are about to miss a CRO filing deadline.
             </h1>
             <p className="max-w-xl text-graphite">
-              Filing Radar reads the Companies Registration Office&apos;s free daily register and
+              Dialed In reads the Companies Registration Office&apos;s free daily register and
               answers plain questions about annual return deadlines: which of your clients to chase
               this week, and which local companies are already overdue and could use an accountant.
             </p>

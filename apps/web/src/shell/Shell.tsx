@@ -1,4 +1,4 @@
-import { IconCalendarDue, IconNotes, IconRadar2 } from '@tabler/icons-react'
+import { IconCalendarDue, IconNotes, IconPhoneCall, IconRadar2 } from '@tabler/icons-react'
 import { Outlet } from 'react-router'
 import { DesktopSidebar, MobileSidebar, Sidebar, SidebarLink } from '#src/components/ui/sidebar'
 import type { SidebarItem } from '#src/components/ui/sidebar'
@@ -15,9 +15,9 @@ function Navigation() {
     <nav aria-label="Primary" className="flex flex-col gap-0.5">
       <span className="mb-8 flex items-center gap-3 px-2.5 font-semibold text-ink">
         <span className="flex size-5 shrink-0 items-center justify-center">
-          <IconRadar2 size={20} aria-hidden />
+          <IconPhoneCall size={20} aria-hidden />
         </span>
-        <span className="whitespace-pre">Filing Radar</span>
+        <span className="whitespace-pre">Dialed In</span>
       </span>
       {NAV_ITEMS.map((item) => (
         <SidebarLink key={item.to} link={item} />
