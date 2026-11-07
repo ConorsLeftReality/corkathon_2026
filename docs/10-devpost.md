@@ -15,7 +15,7 @@ Filing Radar answers two questions for accountancy practices, from the CRO's ope
 - **Prospects:** "Which Cork hospitality companies are overdue on their annual return?" gives a ranked list of overdue companies: new-business leads, with days overdue and an estimated late penalty.
 - **Clients:** "Who do I need to chase this week?" checks the practice's own client list against the register.
 
-You can ask on a web page or by dialling 100 on a desk phone: press 1 for this week's deadlines, 2 for overdue Cork companies, or 3 to ask out loud. Every morning the phone rings and reads out that day's deadlines.
+Each morning the Today screen shows which of your clients are overdue and which are due this week. On the phone, the prototype reads an answer aloud on a desk phone or a personal work mobile. In this version the spoken answer is pre-recorded from the same data; live voice questions are designed and are next.
 
 Every web answer shows how it was made: the filter, the SQL, the row count and the date of the data. If the data is more than a week old, it says so.
 
@@ -25,7 +25,7 @@ Every web answer shows how it was made: the filter, the SQL, the row count and t
 - **Rules in SQL:** filing deadline, days overdue, estimated penalty, Eircode routing key for areas, NACE sector labels. All computed in code from a fixed date.
 - **Plain English:** Claude Haiku, through a forced tool call, turns the question into a JSON filter that must pass a pydantic schema. Code turns the filter into parameterised SQL. The model never writes SQL, never computes a date, penalty or count, and never sees company rows. Answer sentences are templates filled from the result rows.
 - **Web:** Flask API and React page, with sign-in so each practice's client list stays private.
-- **Phone:** a Cisco IP phone wired straight to a Raspberry Pi running Asterisk in Docker, with the Pi giving out addresses on its ethernet port so the venue wifi never matters. The dialplan calls our Python service over FastAGI, which runs the same engine. Speech to text with {whisper.cpp or chosen service}, speech out with Piper. The morning briefing is an Asterisk call file dropped into the outgoing spool.
+- **Phone:** a prototype that plays a pre-recorded spoken answer on a desk phone and on a personal work mobile. {Describe the real setup.} The live design (Asterisk, speech to text, the same filter engine, Piper text to speech, a morning call) is written up in our docs and is the next step.
 
 ## Challenges we ran into
 
@@ -34,7 +34,7 @@ Every web answer shows how it was made: the filter, the SQL, the row count and t
 ## Accomplishments that we're proud of
 
 - An AI feature you can audit: every answer shows the exact filter and SQL that produced it.
-- Phone options that keep working with no AI and no internet.
+- Example questions that run with no AI and say so in the honesty panel.
 - {Fill in.}
 
 ## What we learned

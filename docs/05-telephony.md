@@ -1,6 +1,21 @@
 # Telephony
 
-Everything on this page is **Planned**. Config blocks are the files we intend to commit under `telephony/`; none exist yet.
+## Built for the demo
+
+| Piece | State |
+|---|---|
+| Desk phone | Set up and plays audio |
+| Spoken answer | **Pre-recorded** from hardcoded data. The presenter asks a question out loud, then presses a button on the phone and the recording plays. Nothing listens to the question |
+| Personal work phone | Plays the same recording from a mobile, to show the channel is not tied to a landline |
+| Everything below this section | Planned |
+
+Placeholder: how the button plays the recording (phone model, where the audio file lives, how it was made), so a teammate can rebuild it.
+
+On stage, say the answer is pre-recorded. See [07-demo-and-pitch.md](07-demo-and-pitch.md).
+
+## The live design (Planned)
+
+Everything from here down is **Planned**. Config blocks are the files we intend to commit under `telephony/`; none exist yet.
 
 ## Team deadlines
 

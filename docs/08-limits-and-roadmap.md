@@ -15,7 +15,8 @@ These apply to the planned design. They are said out loud in the demo and shown 
 | Audit exemption flag needs filing history | The companies file alone does not show whether the last return was late | Shows "unknown" until the Financial Statements dataset is loaded |
 | Area filters miss companies without a valid Eircode | Not every registered office has one in the file | Excluded count in the honesty panel |
 | Irish companies only | One registry | Stated in the pitch |
-| Voice questions depend on two network services (Claude, maybe speech to text) | Option 3 needs the internet | Options 1 and 2 never need it; option 3 falls back to "press 1 or 2" |
+| The phone demo plays a pre-recorded answer | The live voice pipeline (record, speech to text, filter, text to speech) is designed but not built | Said out loud in the pitch; the design is in 05-telephony.md |
+| Typed questions need the Claude step, which is not built | The web page offers the stored example questions instead | Example questions run with no AI and are labelled that way in the honesty panel |
 | The model can misread a question | It is a language model | The filter it chose is always visible, and the answer is computed by code from that filter |
 
 > **VERIFY:** the filing window, the penalty and the audit exemption rule before any of them is shown as more than an estimate. See [03-data.md](03-data.md#derived-fields).
@@ -30,7 +31,7 @@ Ordered by what a paying practice would ask for first.
 | 2 | Import client lists from practice software exports | Today it is a CSV of company numbers |
 | 3 | Financial Statements dataset, so the audit exemption flag works | It is the strongest reason to chase a client |
 | 4 | Revenue deadlines | The other half of a practice's calendar; needs a source we do not have yet |
-| 5 | Teams and WhatsApp voice | Same engine, the channels people use at their desk and on the move |
+| 5 | Live voice on any phone: desk phones, personal work mobiles, Teams and WhatsApp | Same engine, the channels people use at their desk and on the move. Today the phone answer is pre-recorded |
 | 6 | Company brief page | Status, filing history, late filings, sector on one screen (stretch goal today) |
 | 7 | UK: Companies House | Similar open company data; a much larger market for prospects mode |
 | 8 | Cayman Islands and US filing deadlines | Matches Frame's offices in Grand Cayman and New York; needs per-jurisdiction rules and data access |
