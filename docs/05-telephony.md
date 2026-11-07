@@ -30,7 +30,7 @@ Everything from here down is **Planned**. Config blocks are the files we intend 
 | Number | What it is |
 |---|---|
 | `201` | The desk phone's own SIP account |
-| `100` | Filing Radar menu |
+| `100` | Dialed In menu |
 | `199` | Books a morning briefing call in 10 seconds (for the stage) |
 
 The plan said "endpoint for ext 100". The phone cannot be both the caller and the number it dials, so the phone registers as `201` and `100` is a dialplan extension.
@@ -286,7 +286,7 @@ Prompts in `telephony/sounds/` (`menu`, `one-moment`, `ask-after-beep`, `invalid
 
 | Prompt | Text |
 |---|---|
-| `menu` | "Filing Radar. Press 1 for this week's deadlines. Press 2 for overdue Cork companies. Press 3 to ask a question." |
+| `menu` | "Dialed In. Press 1 for this week's deadlines. Press 2 for overdue Cork companies. Press 3 to ask a question." |
 | `one-moment` | "One moment, checking the register." |
 | `ask-after-beep` | "Ask your question after the beep." |
 | `invalid` | "Sorry, that is not an option." |
@@ -347,7 +347,7 @@ The phone has no sign-in, so clients mode on the phone reads the list at `RADAR_
 sudo mkdir -p /srv/radar/piper && sudo chown "$USER" /srv/radar/piper
 cd /srv/radar/piper
 # download the linux aarch64 piper release and one voice (.onnx and .onnx.json) here
-echo "Filing Radar test." | ./piper/piper --model ./voice.onnx --output_file test.wav
+echo "Dialed In test." | ./piper/piper --model ./voice.onnx --output_file test.wav
 sox test.wav -r 8000 -c 1 -b 16 test8k.wav
 ```
 
@@ -412,7 +412,7 @@ mkdir -p /var/spool/asterisk/tmp
 tmp="/var/spool/asterisk/tmp/briefing-$$.call"
 cat > "$tmp" <<EOF
 Channel: PJSIP/201
-CallerID: "Filing Radar" <100>
+CallerID: "Dialed In" <100>
 MaxRetries: 1
 RetryTime: 60
 WaitTime: 30

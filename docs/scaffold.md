@@ -1,6 +1,6 @@
 # Scaffold reference
 
-The React and Flask scaffold Filing Radar is built on. This was the original README. It is **Built** and covered by `bun run check`.
+The React and Flask scaffold Dialed In is built on. This was the original README. It is **Built** and covered by `bun run check`.
 
 ## Set up
 

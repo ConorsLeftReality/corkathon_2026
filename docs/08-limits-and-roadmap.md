@@ -1,6 +1,6 @@
 # Limits and roadmap
 
-## What Filing Radar cannot do
+## What Dialed In cannot do
 
 These apply to the planned design. They are said out loud in the demo and shown in the product.
 

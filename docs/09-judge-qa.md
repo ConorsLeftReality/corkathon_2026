@@ -4,7 +4,7 @@ Two minutes of Q&A after the pitch. Short answers first; the detail is for follo
 
 ## "Accountants already know their clients' dates."
 
-They know them in a spreadsheet or practice software, and those dates drift when a client changes its annual return date. Filing Radar checks against the register itself, every day, and asks nothing of them but a question. And prospects mode is about companies they do *not* know yet.
+They know them in a spreadsheet or practice software, and those dates drift when a client changes its annual return date. Dialed In checks against the register itself, every day, and asks nothing of them but a question. And prospects mode is about companies they do *not* know yet.
 
 ## "Isn't this a filtered spreadsheet?"
 

@@ -1,10 +1,10 @@
-# Filing Radar
+# Dialed In
 
-Filing Radar lets a busy accountant ask, on a web page or by dialling extension 100 on their desk phone, which clients are about to miss a CRO filing deadline and which overdue local companies could become new clients, and get a short spoken, sourced answer from the free daily company register. It also rings the phone each morning with the deadlines that matter that day.
+Dialed In tells an accountant, on a web page or their phone, which companies are about to miss or have already missed a CRO filing deadline, using the free daily company register, and shows exactly how it got the answer.
 
 Built at Corkathon, Cork, 7 November 2026, for the Frame sponsor track and IGNITE Best Startup Potential.
 
-> **Status.** Every Filing Radar feature below is **Planned** unless marked **Built**. What is Built today is the React and Flask scaffold (sign-in, database, CI, one-container deploy), described in [docs/scaffold.md](docs/scaffold.md). Each doc labels every feature, and gets updated as pieces land.
+> **Status.** Every Dialed In feature below is **Planned** unless marked **Built**. What is Built today is the React and Flask scaffold (sign-in, database, CI, one-container deploy), described in [docs/scaffold.md](docs/scaffold.md). Each doc labels every feature, and gets updated as pieces land.
 
 ## What it does
 
@@ -62,7 +62,7 @@ bun run radar:fetch
 bun run radar:check
 ```
 
-Run the backend and web page (**Built** for the scaffold, the Radar page is **Planned**):
+Run the backend and web page (**Built**; the pages show real data once the radar API exists):
 
 ```bash
 bun run dev

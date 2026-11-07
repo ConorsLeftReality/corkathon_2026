@@ -1,6 +1,6 @@
 # Radar API contract
 
-For whoever builds the Flask side of Filing Radar. The web app (`/app` and `/app/radar`) is built and waiting for these four routes. Match the shapes below and the page works with no frontend changes.
+For whoever builds the Flask side of Dialed In. The web app (`/app` and `/app/radar`) is built and waiting for these four routes. Match the shapes below and the page works with no frontend changes.
 
 The source of truth is the zod schemas in `apps/web/src/features/radar/radar-api.ts`. This page restates them in Python.
 

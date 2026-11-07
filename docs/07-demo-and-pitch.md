@@ -28,13 +28,13 @@ Top 10 teams pitch live in Boole 2 from 19:35: **3 minutes, then 2 minutes of Q&
 | Time | Beat | On screen or phone | Say (roughly) |
 |---|---|---|---|
 | 0:00 to 0:20 | **Pain** | Landing page | "It's November. Which of your clients have to file with the CRO before Christmas? If you're an accountant, the answer is in a spreadsheet, practice software and someone's head. Miss one and your client pays a late penalty." |
-| 0:20 to 0:45 | **Today** | Driver signs in, Today screen shows overdue clients and clients due this week | "This is Filing Radar. Every morning it checks your client list against the CRO's own register and tells you who to chase. Two are overdue, three are due this week." |
+| 0:20 to 0:45 | **Today** | Driver signs in, Today screen shows overdue clients and clients due this week | "This is Dialed In. Every morning it checks your client list against the CRO's own register and tells you who to chase. Two are overdue, three are due this week." |
 | 0:45 to 1:15 | **Prospects** | Filing deadlines page, Find prospects, click "Which Cork hospitality companies are overdue on their annual return?" | "Now flip it round. These Cork cafes, hotels and pubs have already missed their annual return. Each one is a business without a working filing process, which makes it a lead for a practice. Same data, free and public." |
 | 1:15 to 1:35 | **Show the working** | Driver opens "How this was worked out" | "How do you know it isn't making this up? Here's the filter, the query that ran, the row count and the date of the data. For this question no AI is involved at all. When you type a question, the AI's only job is to pick this filter. It never calculates a date, a penalty or a count." |
 | 1:35 to 2:00 | **Desk phone** | Phone asks the question out loud, presses the button, speaker to the mic | "Busy people don't open dashboards. This is our phone prototype: you ask, and it reads you the answer. The answer you're hearing was generated ahead of time from the same register data. Live speech in and live data out is our next step." (let it play) |
 | 2:00 to 2:20 | **Personal phone** | Same on a mobile, speaker to the mic | "And it doesn't need a landline. Most people at a firm like Frame are on a work mobile, between meetings, on the way to a client. The same answers can reach the phone in their pocket." |
 | 2:20 to 2:50 | **Limits, who pays, what's next** | Back to the honesty panel, point at the snapshot date | "What it can't do yet: it's a daily snapshot, not live. Penalties are estimates, not legal advice. Irish companies only. Who pays? Accountancy practices, per practice, per month. One new client from prospects mode pays for it. Next: live voice, Revenue deadlines, and the UK, where Companies House publishes similar open data." |
-| 2:50 to 3:00 | **Close** | Today screen | "Filing Radar: deadlines you can act on, from data that already exists, on the screen or the phone you already have." |
+| 2:50 to 3:00 | **Close** | Today screen | "Dialed In: deadlines you can act on, from data that already exists, on the screen or the phone you already have." |
 
 Fill in before going on stage:
 

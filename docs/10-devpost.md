@@ -10,7 +10,7 @@ Frame asked us to take data that exists today and turn it into something a busy 
 
 ## What it does
 
-Filing Radar answers two questions for accountancy practices, from the CRO's open company register:
+Dialed In answers two questions for accountancy practices, from the CRO's open company register:
 
 - **Prospects:** "Which Cork hospitality companies are overdue on their annual return?" gives a ranked list of overdue companies: new-business leads, with days overdue and an estimated late penalty.
 - **Clients:** "Who do I need to chase this week?" checks the practice's own client list against the register.
