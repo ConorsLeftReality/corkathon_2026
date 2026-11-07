@@ -1,81 +1,100 @@
-# Corkathon
+# Filing Radar
 
-Our Corkathon project: a React app on a Flask API, shipped as one container. The notes feature is a placeholder that shows sign-in, the database and the web-to-API link working end to end.
+Filing Radar lets a busy accountant ask, on a web page or by dialling extension 100 on their desk phone, which clients are about to miss a CRO filing deadline and which overdue local companies could become new clients, and get a short spoken, sourced answer from the free daily company register. It also rings the phone each morning with the deadlines that matter that day.
 
-## Set up
+Built at Corkathon, Cork, 7 November 2026, for the Frame sponsor track and IGNITE Best Startup Potential.
 
-You need [Bun](https://bun.sh) and [uv](https://docs.astral.sh/uv/getting-started/installation). uv fetches the right Python for you.
+> **Status.** Every Filing Radar feature below is **Planned** unless marked **Built**. What is Built today is the React and Flask scaffold (sign-in, database, CI, one-container deploy), described in [docs/scaffold.md](docs/scaffold.md). Each doc labels every feature, and gets updated as pieces land.
+
+## What it does
+
+| Feature | Status |
+|---|---|
+| **Prospects mode**: "Which Cork hospitality companies are overdue on their annual return?" returns a ranked list of new-business leads | Planned |
+| **Clients mode**: upload your client company numbers, ask "Who do I need to chase this week?" | Planned |
+| **Honesty panel**: every web answer shows the filter that was run, the SQL, the row count and the data snapshot date | Planned |
+| **Desk phone**: dial 100, press 1 (this week's deadlines), 2 (overdue Cork companies) or 3 (ask a question out loud) | Planned |
+| **Morning briefing**: the phone rings and reads the day's key deadlines | Planned |
+| **Company brief**: click a company for status, filing history and sector | Planned (stretch) |
+
+## How it works in 60 seconds
+
+1. A script downloads the CRO "Company Records" open dataset (CC BY 4.0) and loads it into a local DuckDB file. A freshness check flags the snapshot as stale if its newest registration is more than about 7 days old.
+2. Rules in code add derived fields: days to the next annual return date, overdue flag, days overdue, estimated late penalty, Eircode routing key and NACE sector label.
+3. A question in plain English goes to Claude, which may only answer with a JSON filter that must pass a fixed schema. **The model never computes dates, money or counts.**
+4. Code turns the filter into parameterised SQL, runs it on DuckDB, and writes the answer sentence from the result rows, always with the row count and snapshot date.
+5. The same engine answers the web page (React on Flask) and the desk phone (a Cisco IP phone wired to a Raspberry Pi running Asterisk, with speech to text going in and Piper text to speech coming out).
+
+```mermaid
+flowchart LR
+  CRO[CRO open data] --> Load[fetch + load] --> DB[(DuckDB)]
+  Web[Web page] --> API[Flask /api/radar]
+  Phone[Desk phone ext 100] --> PBX[Asterisk on Pi] --> AGI[FastAGI service]
+  API --> Engine
+  AGI --> Engine
+  Engine[question engine] -->|question only| LLM[Claude: text to filter]
+  Engine --> DB
+```
+
+Full detail: [docs/02-architecture.md](docs/02-architecture.md).
+
+## Quickstart
+
+You need [Bun](https://bun.sh) and [uv](https://docs.astral.sh/uv/getting-started/installation).
+
+Set up the scaffold (**Built**):
 
 ```bash
 bun install
 bun run setup
+```
+
+Add your Claude API key to `.env` (**Planned**, nothing reads it yet):
+
+```bash
+echo "ANTHROPIC_API_KEY=sk-ant-..." >> .env
+```
+
+Fetch and load the data (**Planned**):
+
+```bash
+bun run radar:fetch
+bun run radar:check
+```
+
+Run the backend and web page (**Built** for the scaffold, the Radar page is **Planned**):
+
+```bash
 bun run dev
 ```
 
-Open http://localhost:5173. `bun run setup` writes your `.env` with a new secret, installs the Python packages and downloads the Playwright browser.
+Open http://localhost:5173, sign in, and go to `/app/radar`.
 
-## How the two halves connect
+Call extension 100 (**Planned**): set up the Pi as described in [docs/06-runbook.md](docs/06-runbook.md), then pick up the desk phone and dial `100`.
 
-```
-dev:   browser -> Vite :5173 -> /api proxied to Flask :5001
-prod:  browser -> Flask :5001 -> /api routes, everything else from the built React app
-```
+## Docs
 
-The browser only ever talks to one origin, so there is no CORS to configure. Sign-in uses an HttpOnly cookie, and `apiRequest` in `apps/web/src/api/api-client.ts` adds the CSRF header for you.
-
-## Commands
-
-| Command | What it does |
+| Doc | What is in it |
 |---|---|
-| `bun run dev` | Runs Vite and Flask together, both reload on save |
-| `bun run check` | Everything CI runs: types, lint, format, unit tests, e2e, build |
-| `bun run test` | Unit tests for web, API and scripts |
-| `bun run e2e` | Playwright at 360px and 1440px against the built app |
-| `bun run format` | Formats TypeScript and Python |
-| `bun run start` | Builds React and serves it from Flask on port 5001 |
+| [01-overview](docs/01-overview.md) | Problem, users, the two modes, how we meet each judging criterion |
+| [02-architecture](docs/02-architecture.md) | Components and the flows for web, phone and morning briefing |
+| [03-data](docs/03-data.md) | Dataset, fields, licence, freshness gate, derived field formulas |
+| [04-question-engine](docs/04-question-engine.md) | Filter schema, prompt, guardrails, SQL templates, test questions |
+| [05-telephony](docs/05-telephony.md) | Phone network, Asterisk config, dialplan, AGI contract, audio |
+| [06-runbook](docs/06-runbook.md) | Setup from zero, env vars, troubleshooting, pre-demo checklist |
+| [07-demo-and-pitch](docs/07-demo-and-pitch.md) | 3-minute script, stage setup, backups |
+| [08-limits-and-roadmap](docs/08-limits-and-roadmap.md) | What it cannot do, what comes next |
+| [09-judge-qa](docs/09-judge-qa.md) | Likely judge questions and answers |
+| [10-devpost](docs/10-devpost.md) | Ready-to-paste Devpost sections |
+| [decisions](docs/decisions.md) | Short decision records |
+| [scaffold](docs/scaffold.md) | The underlying React and Flask scaffold, commands, deploy |
 
-## Add a feature
+## Team
 
-Work in your own feature folder so the three of us rarely touch the same file.
+Placeholder: add the three team names and roles here.
 
-1. Add `apps/api/corkathon_api/features/<name>/` with `models.py`, `schemas.py`, `routes.py` and `routes_test.py`. Copy from `features/notes`.
-2. Register the blueprint in `apps/api/corkathon_api/app.py`. This is the one shared line.
-3. Add `apps/web/src/features/<name>/` with a `<name>-api.ts` that declares the zod schema for each response.
-4. Add a page in `apps/web/src/routes/`, register it in `src/App.tsx`, and add a nav item in `src/shell/Shell.tsx` if it needs one.
-5. Add an e2e test in `apps/web/tests/e2e/`.
+## Data attribution
 
-Column changes need a fresh local database, since tables are made with `create_all` and there are no migrations. Stop the server and delete `apps/api/instance/`.
+Contains Companies Registration Office data, used under CC BY 4.0. See [docs/03-data.md](docs/03-data.md) for the exact attribution text.
 
-## Frontend
-
-| Route | Page |
-|---|---|
-| `/` | Public landing page |
-| `/login` | Sign in and create account |
-| `/app` | Overview, needs a session |
-| `/app/notes` | Example feature, needs a session |
-
-The look comes from SolLoop: glass surfaces, Mona Sans and one indigo accent. To change the accent, edit `--color-signal` in `apps/web/src/theme.css`.
-
-`src/components/ui/` holds Aceternity's sidebar, sticky banner, flip words, magnetic button and border button. To pull in more, run this from `apps/web`:
-
-```bash
-bunx shadcn@latest add @aceternity/<name>
-```
-
-Then read what it added, swap any default Tailwind colours for our tokens, change `motion` to `m`, and remove any animated `filter`, `width` or `height`.
-
-## Deploy
-
-One container serves everything. On Coolify, point a Dockerfile or compose service at this repo and set:
-
-| Variable | Value |
-|---|---|
-| `JWT_SECRET_KEY` | Output of `openssl rand -hex 32` |
-| `TRUSTED_PROXIES` | `1`, so rate limits see the real client address |
-
-The SQLite file lives on the `/data` volume, and Flask listens on port 5001. Cookies are marked `Secure` in the container, so the site needs HTTPS.
-
-To run it locally: `JWT_SECRET_KEY=<secret> docker compose up --build`.
-
-Rate limits are counted in memory, so keep to one container. Sign-in allows 10 attempts a minute per address and email pair, then 50 per address and 50 per email, set with `AUTH_RATE_LIMIT_PER_MINUTE`. Keep port 5001 private behind the proxy: if clients can reach it directly while `TRUSTED_PROXIES` is set, they can forge their address.
+> **VERIFY:** the attribution wording the CRO asks for on its open data portal.
