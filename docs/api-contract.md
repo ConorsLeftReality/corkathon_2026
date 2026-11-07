@@ -2,9 +2,19 @@
 
 Two APIs feed the web app.
 
-## Filings API (built, `matteo/app.py`)
+## Filings API (built)
 
-The Today screen at `/app` reads this one. It is a separate Flask app on port 5000, on the `matteo` branch.
+The Today screen at `/app` reads this one. It runs inside the main Flask app (`apps/api/corkathon_api/features/filings/`), so it ships in the one deployed container and every route needs a signed-in session. The report logic is ported from Matteo's `matteo/app.py`, which still runs on its own for the phone and ElevenLabs work.
+
+| Setting | Default | What it does |
+|---|---|---|
+| `FILINGS_DATA_DIR` | `apps/api/instance/filings`, `/data/filings` in the container | Holds the CRO snapshot, `my_companies.csv` and the cached `report.json` |
+| `FILINGS_WINDOW_DAYS` | `30` | How far ahead counts as due |
+| `FILINGS_AS_OF` | today | A fixed date for a reproducible demo |
+
+Without a `my_companies.csv` in the data folder, the report uses Matteo's demo list (Ryanair, Kerry Group, CRH and one fake number). On the first request of the day the app downloads the CRO snapshot (about 47 MB) in the background and answers `503 filings_building` until it is ready; the page shows that message with a retry button. To use your own list on the Pi, copy it into the app's `/data/filings/` volume and press Rebuild report.
+
+The rest of this section describes `matteo/app.py` running on its own, which the web app only uses when Vite is started with `FILINGS_API_URL`.
 
 | Route | Returns | Used by |
 |---|---|---|
@@ -13,18 +23,35 @@ The Today screen at `/app` reads this one. It is a separate Flask app on port 50
 | `GET /api/briefing` | plain text for ElevenLabs | Today screen: "What the phone reads" |
 | `POST /api/refresh` | the rebuilt report | Today screen: "Rebuild report" |
 
-The zod schema for the report is `reportSchema` in `apps/web/src/features/filings/filings-api.ts`. Each company has `company_num`, `company_name`, `company_status`, `company_type`, `address`, `last_ar_date`, `nard`, `deadline`, `days_left` (negative when overdue) and `status` (`overdue`, `due`, `ok`, `unknown`, `dissolved` or `not_found`). Errors come back as `{"error": "..."}` and the page shows the message.
+The zod schema for the report is `reportSchema` in `apps/web/src/features/filings/filings-api.ts`. Each company has `company_num`, `company_name`, `company_status`, `company_type`, `address`, `last_ar_date`, `nard`, `deadline`, `days_left` (negative when overdue) and `status` (`overdue`, `due`, `ok`, `unknown`, `dissolved` or `not_found`). Errors come back as `{"error": {"code": ..., "message": ...}}` from the main app and `{"error": "..."}` from the standalone one; the page shows the message either way.
 
-The client list is `my_companies.csv` on the filings server, shared by everyone. There is no sign-in on this API.
+Standalone, the client list is `my_companies.csv` beside `matteo/app.py`, shared by everyone, with no sign-in.
 
-To run it beside the web app:
+To run it standalone beside the web app:
 
 ```bash
 uv run --with flask==3.1.3 python matteo/app.py serve
-bun run dev
+FILINGS_API_URL=http://127.0.0.1:5000 bun run dev
 ```
 
-Vite sends `/api/report`, `/api/companies`, `/api/briefing` and `/api/refresh` to `http://127.0.0.1:5000` (change it with `FILINGS_API_URL`) and everything else under `/api` to the scaffold Flask app on 5001. `bun run dev:mock` answers all of them with placeholder data instead.
+With `FILINGS_API_URL=http://127.0.0.1:5000` set, Vite sends `/api/report`, `/api/companies`, `/api/briefing` and `/api/refresh` to it and everything else under `/api` to the scaffold Flask app on 5001. Without it, all of `/api` goes to the scaffold. `bun run dev:mock` answers all of them with placeholder data instead.
+
+The filings app guards itself:
+
+| Setting | Default | What it does |
+|---|---|---|
+| `HOST` | `127.0.0.1` | Where it listens. Anything else needs `FILINGS_TOKEN`, or it refuses to start |
+| `ALLOWED_HOSTS` | `127.0.0.1:<port>,localhost:<port>` | Requests naming any other host get a 403, which stops DNS rebinding. Add the address another device uses, for example `192.168.1.20:5000` |
+| `FILINGS_TOKEN` | not set | When set, every request needs an `X-Filings-Token` header with this value. Start Vite with the same `FILINGS_TOKEN` and the proxy adds it |
+| `ALLOWED_ORIGIN` | not set | Sends a CORS header for that origin only. The web app does not need it, since it goes through the proxy |
+
+To let the phone or another device fetch the briefing:
+
+```bash
+HOST=0.0.0.0 ALLOWED_HOSTS=192.168.1.20:5000 FILINGS_TOKEN=<long random value> uv run --with flask==3.1.3 python matteo/app.py serve
+```
+
+The device then sends `X-Filings-Token: <the same value>`. Generate the value with `openssl rand -hex 16` and keep it out of git.
 
 ## Radar API (Planned)
 

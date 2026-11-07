@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 import type { Page, Route } from '@playwright/test'
-import { openApp } from './session-steps.ts'
+import { signUp } from './session-steps.ts'
 
 // the radar api is not built yet, so these stub it to the contract in docs/02-architecture.md
 const ASK = '**/api/radar/ask'
@@ -48,7 +48,8 @@ function reply(body: unknown, status = 200) {
 }
 
 async function openRadar(page: Page) {
-  await openApp(page, '/app/radar')
+  await signUp(page)
+  await page.goto('/app/radar')
   await expect(page.getByRole('heading', { name: 'Filing deadlines' })).toBeVisible()
 }
 
@@ -236,6 +237,13 @@ test('company names render as text, not html', async ({ page }) => {
   await askQuestion(page, 'overdue cork hospitality')
   await expect(page.getByText('<img src=x onerror=alert(1)>')).toBeVisible()
   await expect(page.locator('table img')).toHaveCount(0)
+})
+
+test('a lost session returns to sign in', async ({ page }) => {
+  await page.route(ASK, reply({ error: { code: 'unauthorized', message: 'Sign in again.' } }, 401))
+  await openRadar(page)
+  await askQuestion(page, 'overdue cork hospitality')
+  await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible()
 })
 
 test('the whole flow works from the keyboard', async ({ page }) => {

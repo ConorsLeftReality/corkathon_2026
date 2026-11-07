@@ -134,8 +134,8 @@ export function LandingPage() {
           <IconPhoneCall size={22} aria-hidden />
           Dialed In
         </span>
-        <Link to="/app" className="ml-auto text-label font-semibold">
-          Go to Today
+        <Link to="/login" className="ml-auto text-label font-semibold">
+          Sign in
         </Link>
       </header>
 

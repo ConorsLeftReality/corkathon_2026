@@ -125,8 +125,8 @@ function BriefingCard({ briefing }: { briefing: ReturnType<typeof useFilings>['b
   )
 }
 
-export function TodayPanel() {
-  const { report, briefing, retry, rebuild, rebuilding, rebuildError } = useFilings()
+export function TodayPanel({ onSessionLost }: { onSessionLost: () => void }) {
+  const { report, briefing, retry, rebuild, rebuilding, rebuildError } = useFilings(onSessionLost)
 
   return (
     <div className="flex flex-col gap-8">

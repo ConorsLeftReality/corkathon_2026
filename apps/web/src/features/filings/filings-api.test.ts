@@ -94,3 +94,45 @@ describe('createFilingsClient', () => {
     expect(await client.fetchBriefing()).toBe('Filing briefing for 7 November 2026.')
   })
 })
+
+describe('createFilingsClient with the apps/api backend', () => {
+  it('reads the scaffold error envelope and keeps its code', async () => {
+    const client = createFilingsClient(
+      respond(503, {
+        error: {
+          code: 'filings_building',
+          message: "Downloading today's CRO register. Try again in a minute.",
+        },
+      }),
+    )
+    const error = await client.fetchReport().catch((caught: unknown) => caught)
+    expect((error as ApiError).code).toBe('filings_building')
+    expect((error as ApiError).status).toBe(503)
+  })
+
+  it('sends the csrf token with a refresh', async () => {
+    let sent: Headers | undefined
+    const client = createFilingsClient(
+      (_path, init) => {
+        sent = new Headers(init?.headers)
+        return respond(200, report)()
+      },
+      () => 'other=1; csrf_access_token=abc123',
+    )
+    await client.refreshReport()
+    expect(sent?.get('X-CSRF-TOKEN')).toBe('abc123')
+  })
+
+  it('does not send the csrf token with a read', async () => {
+    let sent: Headers | undefined
+    const client = createFilingsClient(
+      (_path, init) => {
+        sent = new Headers(init?.headers)
+        return respond(200, report)()
+      },
+      () => 'csrf_access_token=abc123',
+    )
+    await client.fetchReport()
+    expect(sent?.get('X-CSRF-TOKEN')).toBeNull()
+  })
+})
