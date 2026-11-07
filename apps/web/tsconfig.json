@@ -17,5 +17,5 @@
     "noFallthroughCasesInSwitch": true,
     "verbatimModuleSyntax": true
   },
-  "include": ["src", "tests", "vite.config.ts"]
+  "include": ["src", "tests", "dev", "vite.config.ts"]
 }

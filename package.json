@@ -9,7 +9,9 @@
   "scripts": {
     "setup": "bun scripts/setup.ts",
     "dev": "bun run --parallel dev:web dev:api",
+    "dev:mock": "bun run --parallel dev:web:mock dev:api",
     "dev:web": "bun run --filter web dev",
+    "dev:web:mock": "bun run --filter web dev:mock",
     "dev:api": "uv run --directory apps/api flask --app corkathon_api.app:create_app run --debug --port 5001",
     "build": "bun run --filter web build",
     "start": "bun run build && uv run --directory apps/api python -m corkathon_api.serve",
@@ -17,7 +19,7 @@
     "lint": "eslint . --max-warnings 0 && bun scripts/lint-slop.ts && uv run --directory apps/api ruff check .",
     "format": "prettier --write . && uv run --directory apps/api ruff format .",
     "format:check": "prettier --check . && uv run --directory apps/api ruff format --check .",
-    "test": "bun test ./scripts ./apps/web/src && uv run --directory apps/api pytest",
+    "test": "bun test ./scripts ./apps/web/src ./apps/web/dev && uv run --directory apps/api pytest",
     "e2e": "playwright test",
     "check": "bun run typecheck && bun run lint && bun run format:check && bun run test && bun run e2e && bun run build",
     "lint:commits": "bun scripts/lint-commit-msg.ts --range",
