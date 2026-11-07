@@ -4,9 +4,9 @@ on:
   push:
     branches: [main]
     paths-ignore: # changes only inside these do not redeploy the site
-      - "apps/cro-tracker/**"
-      - "apps/phone/**"
-      - ".github/workflows/deploy-cro-tracker.yml"
+      - 'apps/cro-tracker/**'
+      - 'apps/phone/**'
+      - '.github/workflows/deploy-cro-tracker.yml'
   workflow_dispatch: # lets you trigger a deploy manually from the Actions tab
 
 # Never run two deploys at once on a 906 MiB Pi
