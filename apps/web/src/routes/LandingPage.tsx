@@ -53,9 +53,9 @@ const USES: { term: string; detail: string }[] = [
       'Every answer shows the filter, the query and the row count behind it. The AI only reads your question. The database does every date, count and penalty.',
   },
   {
-    term: 'On your desk phone',
+    term: 'On your phone',
     detail:
-      "Dial 100 for the same answers read aloud, or take a call each morning with the day's deadlines.",
+      'Hear the answers read aloud on a desk phone or a work mobile. In this prototype the spoken answers are recorded ahead of time from the same data.',
   },
 ]
 
