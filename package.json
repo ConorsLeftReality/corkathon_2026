@@ -1,0 +1,41 @@
+{
+  "name": "corkathon",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.4.2",
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "setup": "bun scripts/setup.ts",
+    "dev": "bun run --parallel dev:web dev:api",
+    "dev:mock": "bun run --parallel dev:web:mock dev:api",
+    "dev:web": "bun run --filter web dev",
+    "dev:web:mock": "bun run --filter web dev:mock",
+    "dev:api": "uv run --directory apps/api flask --app corkathon_api.app:create_app run --debug --port 5001",
+    "build": "bun run --filter web build",
+    "start": "bun run build && uv run --directory apps/api python -m corkathon_api.serve",
+    "typecheck": "tsc --noEmit -p tsconfig.json && bun run --filter web typecheck && uv run --directory apps/api mypy .",
+    "lint": "eslint . --max-warnings 0 && bun scripts/lint-slop.ts && uv run --directory apps/api ruff check .",
+    "format": "prettier --write . && uv run --directory apps/api ruff format .",
+    "format:check": "prettier --check . && uv run --directory apps/api ruff format --check .",
+    "test": "bun test ./scripts ./apps/web/src ./apps/web/dev && uv run --directory apps/api pytest",
+    "e2e": "playwright test",
+    "check": "bun run typecheck && bun run lint && bun run format:check && bun run test && bun run e2e && bun run build",
+    "lint:commits": "bun scripts/lint-commit-msg.ts --range",
+    "prepare": "lefthook install",
+    "radar:contract": "bun run --filter web radar:contract"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.65.0",
+    "@types/bun": "1.4.4",
+    "eslint": "10.14.0",
+    "jiti": "2.7.0",
+    "lefthook": "2.2.2",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.1"
+  }
+}

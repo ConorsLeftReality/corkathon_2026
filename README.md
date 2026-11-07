@@ -1,2 +1,108 @@
-# corkathon2026
-Repo for Corkathon 2026
+# Dialed In
+
+Dialed In tells an accountant, on a web page or their phone, which companies are about to miss or have already missed a CRO filing deadline, using the free daily company register, and shows exactly how it got the answer.
+
+Built at Corkathon, Cork, 7 November 2026, for the Frame sponsor track and IGNITE Best Startup Potential.
+
+> **Status.** Every Dialed In feature below is **Planned** unless marked **Built**. What is Built today is the React and Flask scaffold (sign-in, database, CI, one-container deploy), described in [docs/scaffold.md](docs/scaffold.md). Each doc labels every feature, and gets updated as pieces land.
+
+## What it does
+
+| Feature | Status |
+|---|---|
+| **Prospects mode**: "Which Cork hospitality companies are overdue on their annual return?" returns a ranked list of new-business leads | Planned |
+| **Clients mode**: upload your client company numbers, ask "Who do I need to chase this week?" | Web UI built (client list on `/app`, questions on `/app/radar`), API Planned |
+| **Honesty panel**: every web answer shows the filter that was run, the SQL, the row count and the data snapshot date | Web UI built at `/app/radar`, API Planned |
+| **Phone**: hear answers read aloud on a desk phone or a personal work mobile | Demo prototype: plays a pre-recorded answer made from hardcoded data. Live voice (dial 100, ask out loud) Planned |
+| **Morning briefing**: the phone rings and reads the day's key deadlines | Planned. The same briefing on screen is the Today page at `/app` (web UI built, API Planned) |
+| **Company brief**: click a company for status, filing history and sector | Planned (stretch) |
+
+## How it works in 60 seconds
+
+1. A script downloads the CRO "Company Records" open dataset (CC BY 4.0) and loads it into a local DuckDB file. A freshness check flags the snapshot as stale if its newest registration is more than about 7 days old.
+2. Rules in code add derived fields: days to the next annual return date, overdue flag, days overdue, estimated late penalty, Eircode routing key and NACE sector label.
+3. A question in plain English goes to Claude, which may only answer with a JSON filter that must pass a fixed schema. **The model never computes dates, money or counts.**
+4. Code turns the filter into parameterised SQL, runs it on DuckDB, and writes the answer sentence from the result rows, always with the row count and snapshot date.
+5. The same engine answers the web page (React on Flask) and the desk phone (a Cisco IP phone wired to a Raspberry Pi running Asterisk, with speech to text going in and Piper text to speech coming out).
+
+```mermaid
+flowchart LR
+  CRO[CRO open data] --> Load[fetch + load] --> DB[(DuckDB)]
+  Web[Web page] --> API[Flask /api/radar]
+  Phone[Desk phone ext 100] --> PBX[Asterisk on Pi] --> AGI[FastAGI service]
+  API --> Engine
+  AGI --> Engine
+  Engine[question engine] -->|question only| LLM[Claude: text to filter]
+  Engine --> DB
+```
+
+Full detail: [docs/02-architecture.md](docs/02-architecture.md).
+
+## Quickstart
+
+You need [Bun](https://bun.sh) and [uv](https://docs.astral.sh/uv/getting-started/installation).
+
+Set up the scaffold (**Built**):
+
+```bash
+bun install
+bun run setup
+```
+
+Add your Claude API key to `.env` (**Planned**, nothing reads it yet):
+
+```bash
+echo "ANTHROPIC_API_KEY=sk-ant-..." >> .env
+```
+
+Fetch and load the data (**Planned**):
+
+```bash
+bun run radar:fetch
+bun run radar:check
+```
+
+Run the backend and web page (**Built**; the pages show real data once the radar API exists):
+
+```bash
+bun run dev
+```
+
+Open http://localhost:5173; sign-in is switched off for the demo, so the app opens straight onto Today. The Today screen reads the filings API in `matteo/app.py`; start it with `uv run --with flask==3.1.3 python matteo/app.py serve` (details in [docs/api-contract.md](docs/api-contract.md)).
+
+Until the radar API exists, run the web app against a mock instead (**Built**, dev only):
+
+```bash
+bun run dev:mock
+```
+
+This is `bun run dev` with `/api/radar/*` answered by `apps/web/dev/radar-mock.ts`: placeholder companies only, one shared client list, no AI. Sign-in still goes to the real Flask app. The mock is never part of a production build, and its unit tests check every response against the zod schemas in `apps/web/src/features/radar/radar-api.ts`, which is the contract the real API must meet.
+
+Call extension 100 (**Planned**): set up the Pi as described in [docs/06-runbook.md](docs/06-runbook.md), then pick up the desk phone and dial `100`.
+
+## Docs
+
+| Doc | What is in it |
+|---|---|
+| [01-overview](docs/01-overview.md) | Problem, users, the two modes, how we meet each judging criterion |
+| [02-architecture](docs/02-architecture.md) | Components and the flows for web, phone and morning briefing |
+| [03-data](docs/03-data.md) | Dataset, fields, licence, freshness gate, derived field formulas |
+| [04-question-engine](docs/04-question-engine.md) | Filter schema, prompt, guardrails, SQL templates, test questions |
+| [05-telephony](docs/05-telephony.md) | Phone network, Asterisk config, dialplan, AGI contract, audio |
+| [06-runbook](docs/06-runbook.md) | Setup from zero, env vars, troubleshooting, pre-demo checklist |
+| [07-demo-and-pitch](docs/07-demo-and-pitch.md) | 3-minute script, stage setup, backups |
+| [08-limits-and-roadmap](docs/08-limits-and-roadmap.md) | What it cannot do, what comes next |
+| [09-judge-qa](docs/09-judge-qa.md) | Likely judge questions and answers |
+| [10-devpost](docs/10-devpost.md) | Ready-to-paste Devpost sections |
+| [decisions](docs/decisions.md) | Short decision records |
+| [scaffold](docs/scaffold.md) | The underlying React and Flask scaffold, commands, deploy |
+
+## Team
+
+Placeholder: add the three team names and roles here.
+
+## Data attribution
+
+Contains Companies Registration Office data, used under CC BY 4.0. See [docs/03-data.md](docs/03-data.md) for the exact attribution text.
+
+> **VERIFY:** the attribution wording the CRO asks for on its open data portal.

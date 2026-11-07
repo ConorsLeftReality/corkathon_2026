@@ -1,0 +1,4 @@
+# proper names that contain a slop word, matched case sensitive
+# a repo can add its own in scripts/slop-allow.txt
+Elevate Tweaks
+Elevate storefront

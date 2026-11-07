@@ -1,0 +1,293 @@
+@import 'tailwindcss';
+
+/* registry components use dark: and nothing sets .dark, so a dark os cannot flip them on a light app */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@font-face {
+  font-family: 'Mona Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 900;
+  font-stretch: 75% 125%;
+  src: url('./assets/fonts/mona-sans-latin-standard-normal.woff2') format('woff2-variations');
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('./assets/fonts/ibm-plex-mono-latin-400-normal.woff2') format('woff2');
+}
+
+@theme {
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-black: #000000;
+  /* dark green brand on pale green paper, red ink for overdue */
+  --color-ink: #16201b;
+  --color-graphite: #46544b;
+  --color-haze: #74867a;
+  --color-shell: #e8eee9;
+  --color-rim: #ffffff;
+  --color-rule: #b5c9bc;
+  --color-dither: #bfd3c6;
+  --color-signal: #1b4a36;
+  --color-signal-deep: #123426;
+  --color-signal-tint: #e0ebe4;
+  --color-edge-soft: #c9dccf;
+  --color-edge-cool: #3f8a68;
+
+  /* outcomes only, never decoration. body size text uses the -deep shade to clear 4.5:1 */
+  /* success is blue so a saved or copied message never reads as more brand green */
+  --color-success: #1d5fa8;
+  --color-success-deep: #174c87;
+  --color-success-tint: #e5eef8;
+  --color-warning: #b06e00;
+  --color-warning-deep: #8a5500;
+  --color-warning-tint: #fbf1de;
+  --color-danger: #c0392f;
+  --color-danger-deep: #a12d24;
+  --color-danger-tint: #fbe8e6;
+
+  --color-line: rgb(22 32 27 / 0.09);
+  --color-line-strong: rgb(22 32 27 / 0.16);
+  --color-wash: rgb(22 32 27 / 0.04);
+
+  --font-sans: 'Mona Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  --radius-*: initial;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-full: 9999px;
+
+  --shadow-raised:
+    inset 0 1px 0 0 rgb(255 255 255 / 0.85), 0 1px 2px rgb(16 24 34 / 0.04),
+    0 8px 24px -12px rgb(16 24 34 / 0.1);
+  --shadow-overlay:
+    inset 0 1px 0 0 rgb(255 255 255 / 0.9), 0 2px 6px rgb(16 24 34 / 0.06),
+    0 24px 48px -16px rgb(16 24 34 / 0.22);
+  --shadow-glow: 0 10px 30px -12px color-mix(in srgb, var(--color-signal) 55%, transparent);
+
+  --text-hero: 4.25rem;
+  --text-hero--line-height: 1;
+  --text-display: 2.75rem;
+  --text-display--line-height: 1.05;
+  --text-h1: 1.75rem;
+  --text-h1--line-height: 1.2;
+  --text-h2: 1.25rem;
+  --text-h2--line-height: 1.3;
+  --text-metric: 2rem;
+  --text-metric--line-height: 1.1;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.55;
+  --text-label: 0.8125rem;
+  --text-label--line-height: 1.4;
+  --text-micro: 0.75rem;
+  --text-micro--line-height: 1.4;
+}
+
+/* shadcn names pointed at our tokens so anything pulled from a registry lands in this palette */
+@theme inline {
+  --color-background: var(--color-shell);
+  --color-foreground: var(--color-ink);
+  --color-card: var(--color-rim);
+  --color-card-foreground: var(--color-ink);
+  --color-popover: var(--color-rim);
+  --color-popover-foreground: var(--color-ink);
+  --color-primary: var(--color-signal);
+  --color-primary-foreground: var(--color-rim);
+  --color-secondary: var(--color-signal-tint);
+  --color-secondary-foreground: var(--color-signal-deep);
+  --color-muted: var(--color-wash);
+  --color-muted-foreground: var(--color-graphite);
+  --color-accent: var(--color-signal-tint);
+  --color-accent-foreground: var(--color-signal-deep);
+  --color-destructive: var(--color-danger);
+  --color-border: var(--color-line);
+  --color-input: var(--color-line-strong);
+  --color-ring: var(--color-signal);
+}
+
+:root {
+  --glass-fill: rgb(255 255 255 / 0.58);
+  --glass-fill-raised: rgb(255 255 255 / 0.74);
+  --glass-edge: rgb(255 255 255 / 0.85);
+  --glass-border: rgb(16 24 34 / 0.07);
+  --glass-blur: 20px;
+}
+
+@layer base {
+  html {
+    background: var(--color-shell);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    min-height: 100dvh;
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+  }
+
+  a {
+    color: var(--color-signal);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-signal);
+    outline-offset: 2px;
+  }
+
+  ::placeholder {
+    color: var(--color-graphite);
+  }
+}
+
+@layer components {
+  .surface {
+    background: var(--glass-fill);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+    backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-raised);
+  }
+
+  .surface-overlay {
+    background: var(--glass-fill-raised);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+    backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-overlay);
+  }
+
+  /* glass inside glass looks like fog, nested cards use this instead */
+  .inset {
+    background: var(--color-rim);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-md);
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  /* mona sans narrowed on its width axis so a three digit count still reads at a glance */
+  .figure {
+    font-size: var(--text-metric);
+    line-height: var(--text-metric--line-height);
+    font-stretch: 75%;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  .field {
+    border: 1px solid var(--color-haze);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-rim);
+    padding: 0.5rem 0.75rem;
+  }
+
+  .field[aria-invalid='true'] {
+    border-color: var(--color-danger);
+  }
+
+  .button-primary {
+    border-radius: var(--radius-md);
+    background-color: var(--color-signal);
+    color: var(--color-rim);
+    cursor: pointer;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+  }
+
+  .button-primary:disabled {
+    cursor: wait;
+    opacity: 0.7;
+  }
+
+  .button-quiet {
+    border-radius: var(--radius-md);
+    color: var(--color-signal);
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    text-decoration: underline;
+    white-space: nowrap;
+  }
+
+  .glass-edge {
+    background: conic-gradient(
+      from 90deg at 50% 50%,
+      var(--color-edge-soft) 0%,
+      var(--color-signal) 35%,
+      var(--color-edge-cool) 65%,
+      var(--color-edge-soft) 100%
+    );
+    animation: edge-spin 3s linear infinite;
+    /* nothing moves while idle, the edge only turns while someone is on the button */
+    animation-play-state: paused;
+  }
+
+  .group:hover .glass-edge,
+  .group:focus-visible .glass-edge {
+    animation-play-state: running;
+  }
+
+  .animate-spotlight {
+    animation: spotlight 2s ease 0.4s 1 forwards;
+  }
+}
+
+@keyframes spotlight {
+  0% {
+    opacity: 0;
+    transform: translate(-72%, -62%) scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -40%) scale(1);
+  }
+}
+
+@keyframes edge-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .surface {
+    background: rgb(255 255 255 / 0.94);
+  }
+
+  .surface-overlay {
+    background: rgb(255 255 255 / 0.98);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .surface,
+  .surface-overlay {
+    background: var(--color-rim);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
