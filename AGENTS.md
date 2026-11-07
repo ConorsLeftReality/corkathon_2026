@@ -1,6 +1,6 @@
 # Working in this repo
 
-Rules for the three of us and for any coding agent. `README.md` covers setup.
+Rules for the three of us and for any coding agent. `README.md` covers the product and quickstart, `docs/scaffold.md` the scaffold commands and deploy, and `docs/` the Filing Radar design.
 
 ## Layout
 
