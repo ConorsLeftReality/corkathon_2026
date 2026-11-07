@@ -12,7 +12,8 @@
     "dev": "bun --bun vite --port 5173 --strictPort",
     "build": "bun --bun vite build",
     "typecheck": "tsc --noEmit",
-    "dev:mock": "bun --bun vite --port 5173 --strictPort --mode mock"
+    "dev:mock": "bun --bun vite --port 5173 --strictPort --mode mock",
+    "radar:contract": "bun dev/radar-contract.ts"
   },
   "dependencies": {
     "@tabler/icons-react": "3.50.0",

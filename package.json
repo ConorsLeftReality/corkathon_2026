@@ -23,7 +23,8 @@
     "e2e": "playwright test",
     "check": "bun run typecheck && bun run lint && bun run format:check && bun run test && bun run e2e && bun run build",
     "lint:commits": "bun scripts/lint-commit-msg.ts --range",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install",
+    "radar:contract": "bun run --filter web radar:contract"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
