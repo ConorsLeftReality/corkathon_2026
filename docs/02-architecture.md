@@ -50,7 +50,7 @@ flowchart TB
 | Flask app | `apps/api/corkathon_api/app.py` | App factory, sign-in, rate limits, serves the built React app | Built |
 | React shell | `apps/web/src/shell/Shell.tsx` | Signed-in layout and nav | Built |
 | Radar feature (API) | `apps/api/corkathon_api/features/radar/` | Loader, rules, filter schema, router, query, answer, routes | Planned |
-| Radar feature (web) | `apps/web/src/features/radar/`, `apps/web/src/routes/RadarPage.tsx` | Question box, answer, results table, honesty panel, client list upload | Planned |
+| Radar feature (web) | `apps/web/src/features/radar/`, `apps/web/src/routes/RadarPage.tsx` | Question box, mode switch, example questions, answer, ledger table, working paper (honesty panel), loading, empty, error and stale states | Built against a stubbed API (e2e stubs `/api/radar/ask`). Client list upload: Planned |
 | DuckDB file | `apps/api/data/radar.duckdb` (gitignored) | The loaded snapshot plus derived fields | Planned |
 | Asterisk | `telephony/` on the Pi | Registers the phone, runs the menu dialplan, records questions, plays answers | Planned |
 | FastAGI service | `radar.phone_agi`, on the Pi | Takes calls from the dialplan, runs the same engine, returns an audio file | Planned |
@@ -129,11 +129,13 @@ sequenceDiagram
 
 | Method and path | Auth | Body or query | Returns |
 |---|---|---|---|
-| `POST /api/radar/ask` | `@jwt_required()` | `{question: string (1-300 chars), mode: "clients" \| "prospects"}` | `{kind: "answer", answer, rows, filter, sql, row_count, snapshot}` or `{kind: "clarify" \| "refuse", message, snapshot}` |
+| `POST /api/radar/ask` | `@jwt_required()` | `{mode: "clients" \| "prospects", question: string (1-300 chars)}` or `{mode, preset: string}` | `{kind: "answer", answer, rows, filter, sql, params, row_count, snapshot}` or `{kind: "clarify" \| "refuse", message, snapshot}` |
 | `GET /api/radar/snapshot` | `@jwt_required()` | none | `{fetched_at, newest_reg_date, stale}` |
 | `GET /api/radar/clients` | `@jwt_required()` | none | the signed-in user's company numbers |
 | `PUT /api/radar/clients` | `@jwt_required()` | `{company_numbers: string[]}`, max 2,000 | replaces the signed-in user's list |
 | `GET /api/radar/companies/<num>` | `@jwt_required()` | none | one company brief (stretch) |
+
+`preset` is the id of a stored filter (`overdue_cork_hospitality`, `overdue_cork_city`, `clients_this_week`, `clients_overdue`, defined in `apps/web/src/features/radar/radar-api.ts`). The server looks the id up in its own allowlist and runs that filter with no call to Claude; an unknown id is `radar_question_invalid`. The browser never sends a filter. The zod schema in `radar-api.ts` is the response contract the API must meet.
 
 Client lists are user data, so every query filters by `signed_in_user().id`, and `routes_test.py` proves user B cannot read user A's list (repo rule in `AGENTS.md`).
 
