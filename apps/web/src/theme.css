@@ -71,6 +71,8 @@
     0 24px 48px -16px rgb(16 24 34 / 0.22);
   --shadow-glow: 0 10px 30px -12px color-mix(in srgb, var(--color-signal) 55%, transparent);
 
+  --text-hero: 4.25rem;
+  --text-hero--line-height: 1;
   --text-display: 2.75rem;
   --text-display--line-height: 1.05;
   --text-h1: 1.75rem;
@@ -229,6 +231,28 @@
       var(--color-edge-soft) 100%
     );
     animation: edge-spin 3s linear infinite;
+    /* nothing moves while idle, the edge only turns while someone is on the button */
+    animation-play-state: paused;
+  }
+
+  .group:hover .glass-edge,
+  .group:focus-visible .glass-edge {
+    animation-play-state: running;
+  }
+
+  .animate-spotlight {
+    animation: spotlight 2s ease 0.4s 1 forwards;
+  }
+}
+
+@keyframes spotlight {
+  0% {
+    opacity: 0;
+    transform: translate(-72%, -62%) scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -40%) scale(1);
   }
 }
 
