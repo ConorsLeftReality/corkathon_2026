@@ -46,7 +46,8 @@ REPORT_JSON = os.environ.get("REPORT_JSON", "report.json")
 BRIEFING_TXT = os.environ.get("BRIEFING_TXT", "briefing.txt")
 WINDOW_DAYS = int(os.environ.get("WINDOW_DAYS", "30"))   # "due soon" window
 GRACE_DAYS = 56                                          # return must reach CRO within 56 days of the ARD
-ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "*")   # set to Evan's site URL in production
+ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "")    # empty sends no CORS header; the web app calls through the Vite proxy
+HOST = os.environ.get("HOST", "127.0.0.1")              # 0.0.0.0 only if another device must reach it
 
 CRO_SNAPSHOT_URL = (
     "https://opendata.cro.ie/dataset/bf6f837d-0946-4c14-9a99-82cd6980c121/"
@@ -296,6 +297,8 @@ app = Flask(__name__)
 
 @app.after_request
 def add_cors(resp):
+    if not ALLOWED_ORIGIN:
+        return resp
     resp.headers["Access-Control-Allow-Origin"] = ALLOWED_ORIGIN
     resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
     resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
@@ -376,4 +379,4 @@ if __name__ == "__main__":
     else:
         if args.snapshot:
             print_table(build_report(snapshot_path=args.snapshot, window_days=args.window))
-        app.run(host="0.0.0.0", port=args.port, debug=False)
+        app.run(host=HOST, port=args.port, debug=False)
