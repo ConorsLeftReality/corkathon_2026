@@ -75,3 +75,30 @@ test('the landing example is labelled as placeholder data', async ({ page }) => 
   await expect(example.getByRole('rowheader', { name: /Placeholder Bakery Limited/ })).toBeVisible()
   await expect(page.getByText('The companies are placeholders, not register data.')).toBeVisible()
 })
+
+test.describe('on a desktop', () => {
+  test.use({ viewport: { width: 1440, height: 900 } })
+
+  test('a cursor resting where the rail appears does not open it over the page', async ({
+    page,
+  }) => {
+    await openApp(page, '/app/radar')
+    await expect(page.getByRole('heading', { name: 'Filing deadlines' })).toBeVisible()
+    // chrome on linux sends this, with no movement, when the rail renders under a still pointer
+    await page.getByRole('navigation', { name: 'Primary' }).dispatchEvent('mouseover')
+    await page.getByText('My clients', { exact: true }).click()
+    // find prospects sits inside the 232px the open rail would cover
+    await page.getByText('Find prospects', { exact: true }).click({ timeout: 3000 })
+    await expect(page.getByRole('radio', { name: 'Find prospects' })).toBeChecked()
+  })
+
+  test('moving onto the rail opens it and moving away closes it', async ({ page }) => {
+    await openApp(page, '/app/radar')
+    const label = page.getByRole('navigation').getByText('Filing deadlines', { exact: true })
+    await page.mouse.move(400, 300)
+    await page.mouse.move(20, 300, { steps: 5 })
+    await expect(label).toHaveCSS('opacity', '1')
+    await page.mouse.move(700, 300, { steps: 5 })
+    await expect(label).toHaveCSS('opacity', '0')
+  })
+})

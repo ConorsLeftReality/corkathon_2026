@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import type { FocusEvent, ReactNode } from 'react'
+import type { FocusEvent, PointerEvent, ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { NavLink } from 'react-router'
 import { IconMenu2, IconX } from '@tabler/icons-react'
@@ -39,6 +39,13 @@ export function DesktopSidebar({ children }: { children: ReactNode }) {
     if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false)
   }
 
+  // chrome sends mouse events with no movement when the rail renders under a still pointer
+  // so only real movement opens it, otherwise it covers the left of the page
+  function openOnRealMovement(event: PointerEvent<HTMLDivElement>) {
+    if (event.pointerType !== 'mouse' || open) return
+    if (event.movementX !== 0 || event.movementY !== 0) setOpen(true)
+  }
+
   return (
     // the outer box holds 60px in the flow so the panel widens over the page, not beside it
     <div className="sticky top-0 z-30 hidden h-dvh w-[60px] shrink-0 lg:block">
@@ -47,9 +54,7 @@ export function DesktopSidebar({ children }: { children: ReactNode }) {
           'absolute inset-y-0 left-0 flex h-full flex-col overflow-hidden border-r border-line bg-shell px-2.5 py-5',
           open ? 'w-[232px] shadow-overlay' : 'w-[60px]',
         )}
-        onMouseEnter={() => {
-          setOpen(true)
-        }}
+        onPointerMove={openOnRealMovement}
         onMouseLeave={() => {
           setOpen(false)
         }}
