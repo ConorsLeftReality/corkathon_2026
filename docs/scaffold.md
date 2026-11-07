@@ -74,7 +74,7 @@ One container serves everything. On Coolify, point a Dockerfile or compose servi
 | `JWT_SECRET_KEY` | Output of `openssl rand -hex 32` |
 | `TRUSTED_PROXIES` | `1`, so rate limits see the real client address |
 
-The SQLite file lives on the `/data` volume, and Flask listens on port 5001. Cookies are marked `Secure` in the container, so the site needs HTTPS.
+The SQLite file lives on the `/data` volume, and Flask listens on port 5001. Cookies are marked `Secure` in the container, so the site needs HTTPS. Over plain `http://` (a Dokku app without Let's Encrypt, a Coolify `sslip.io` domain, a LAN address) the browser drops the session cookie and sign in bounces straight back to the login page. Turn on HTTPS (`dokku letsencrypt:enable <app>`), or set `COOKIE_SECURE=false` for an http only demo (`dokku config:set <app> COOKIE_SECURE=false`).
 
 To run it locally: `JWT_SECRET_KEY=<secret> docker compose up --build`.
 

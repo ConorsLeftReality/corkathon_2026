@@ -34,7 +34,11 @@ def apply_config(app: Flask, settings: Settings) -> None:
         JWT_SECRET_KEY=settings.jwt_secret_key.get_secret_value(),
         JWT_ACCESS_TOKEN_EXPIRES=timedelta(hours=settings.session_hours),
         JWT_TOKEN_LOCATION=["cookies"],
-        JWT_COOKIE_SECURE=settings.app_env == "production",
+        JWT_COOKIE_SECURE=(
+            settings.app_env == "production"
+            if settings.cookie_secure is None
+            else settings.cookie_secure
+        ),
         JWT_COOKIE_SAMESITE="Strict",
         JWT_COOKIE_CSRF_PROTECT=True,
         # a persistent cookie so a browser restart mid demo keeps the login
