@@ -11,7 +11,12 @@ export default defineConfig({
   testMatch: '*.e2e.ts',
   outputDir: 'test-results',
   forbidOnly: true,
-  use: { ...devices['Desktop Chrome'], baseURL: `http://127.0.0.1:${PORT}` },
+  use: {
+    ...devices['Desktop Chrome'],
+    baseURL: `http://127.0.0.1:${PORT}`,
+    // ci only shows a bare timeout, so keep the trace of anything that fails there
+    trace: process.env.CI ? 'retain-on-failure' : 'off',
+  },
   projects: [
     { name: 'phone', use: { viewport: { width: 360, height: 740 } } },
     { name: 'desktop', use: { viewport: { width: 1440, height: 900 } } },
