@@ -19,6 +19,8 @@ def make_settings(tmp_path: Path, **overrides: object) -> Settings:
         "database_url": f"sqlite:///{tmp_path / 'test.db'}",
         "web_dist": tmp_path / "dist",
         "auth_rate_limit_per_minute": 1000,
+        # pinned so a developer's own .env allowlist never leaks into tests
+        "filings_allowed_emails": "",
     }
     return Settings(**{**values, **overrides})  # type: ignore[arg-type]
 
