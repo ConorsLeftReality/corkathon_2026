@@ -68,7 +68,7 @@ Run the backend and web page (**Built**; the pages show real data once the radar
 bun run dev
 ```
 
-Open http://localhost:5173; sign-in is switched off for the demo, so the app opens straight onto Today. The Today screen reads the filings API in `matteo/app.py`; start it with `uv run --with flask==3.1.3 python matteo/app.py serve` (details in [docs/api-contract.md](docs/api-contract.md)).
+Open http://localhost:5173 and sign in. The Today screen reads the filings API in `matteo/app.py`; start it with `uv run --with flask==3.1.3 python matteo/app.py serve` (details in [docs/api-contract.md](docs/api-contract.md)).
 
 Until the radar API exists, run the web app against a mock instead (**Built**, dev only):
 
