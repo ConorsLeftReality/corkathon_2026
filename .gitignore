@@ -9,3 +9,9 @@ __pycache__
 .ruff_cache
 .pytest_cache
 apps/api/instance
+
+# filings app output, and the client list it reads
+report.json
+briefing.txt
+my_companies.csv
+cro_companies_*.csv.zip
