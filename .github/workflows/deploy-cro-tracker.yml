@@ -4,8 +4,8 @@ on:
   push:
     branches: [main]
     paths: # only redeploy when the tracker changes
-      - "apps/cro-tracker/**"
-      - ".github/workflows/deploy-cro-tracker.yml"
+      - 'apps/cro-tracker/**'
+      - '.github/workflows/deploy-cro-tracker.yml'
   workflow_dispatch: # lets you trigger a deploy manually from the Actions tab
 
 env:

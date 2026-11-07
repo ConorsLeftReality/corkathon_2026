@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { PASSWORD, signUp, uniqueEmail } from './session-steps.ts'
+import { PASSWORD, signUp, uniqueEmail, signedInAs } from './session-steps.ts'
 
 async function expectNoAxeViolations(page: Page) {
   const { violations } = await new AxeBuilder({ page }).analyze()
@@ -42,7 +42,7 @@ test('an account can be created with the keyboard alone', async ({ page }) => {
   await page.keyboard.press('Tab')
   await page.keyboard.type(PASSWORD)
   await page.keyboard.press('Enter')
-  await expect(page.getByText(email)).toBeVisible()
+  await expect(signedInAs(page, email)).toBeVisible()
 })
 
 test('the page runs under the csp with no violations', async ({ page }) => {

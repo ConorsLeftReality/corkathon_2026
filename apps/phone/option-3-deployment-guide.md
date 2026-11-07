@@ -1,4 +1,4 @@
-# Filing Radar – Option 3 Deployment Guide
+# Filing Radar: option 3 deployment guide
 
 Nov 7, 2026 · @Conor Masterson
 
@@ -18,7 +18,7 @@ What happens on each call:
 | --- | --- | --- | --- |
 | `transcribe_audio.py` | `/opt/filing-radar/` | root, 755 | The option 3 script |
 | `env.example` | `/opt/filing-radar/.env` | asterisk, 600 | Paths and settings (no keys needed) |
-| `deploy_option3.sh` | anywhere, run with sudo | — | Installs, checks, tests |
+| `deploy_option3.sh` | anywhere, run with sudo | not needed | Installs, checks, tests |
 | `report.json` | written by `app.py run` | readable by asterisk | The CRO data the answers come from |
 | `en_GB-alan-low.onnx` + `.onnx.json` | `/opt/piper-voices/` | readable by asterisk | Piper fallback voice |
 | `log.txt` | `/var/spool/asterisk/radar/` | asterisk | QUESTION / ANSWER / timing per call |
@@ -36,12 +36,12 @@ One command does the whole install once the three files are on the server: `sudo
    sudo bash deploy_option3.sh
    ```
 4. Read the six sections it prints:
-   - **Install** — copies the script to `/opt/filing-radar/` and creates `.env` (asterisk, 600) if missing.
-   - **Python libraries** — checks `speech_recognition` and `gtts` import *as asterisk*; if not, installs them system-wide.
-   - **Binaries and voice** — ffmpeg, piper, and the voice `.onnx` + `.onnx.json`.
-   - **CRO report** — confirms asterisk can read `report.json` and prints a sample spoken summary.
-   - **Network** — Google must be reachable for speech-to-text.
-   - **End-to-end test** — runs the newest `q-*.wav` exactly as Asterisk does and checks the output format and timing.
+   - **Install**: copies the script to `/opt/filing-radar/` and creates `.env` (asterisk, 600) if missing.
+   - **Python libraries**: checks `speech_recognition` and `gtts` import *as asterisk*; if not, installs them system-wide.
+   - **Binaries and voice**: ffmpeg, piper, and the voice `.onnx` + `.onnx.json`.
+   - **CRO report**: confirms asterisk can read `report.json` and prints a sample spoken summary.
+   - **Network**: Google must be reachable for speech-to-text.
+   - **End-to-end test**: runs the newest `q-*.wav` exactly as Asterisk does and checks the output format and timing.
 5. Tell C the dialplan line stays as is: `/usr/bin/python3 /opt/filing-radar/transcribe_audio.py <in.wav> <out>`. No venv is used.
 
 If `report.json` lives somewhere else, edit one line in `/opt/filing-radar/.env`: `REPORT_PATH=/real/path/report.json`, then rerun step 3.
@@ -80,7 +80,7 @@ Questions to try on the call:
 - [ ] "Which companies are overdue?"
 - [ ] "What's due this week?"
 - [ ] "Give me a summary"
-- [ ] Silence or noise — should say it didn't catch the question, not "sorry"
+- [ ] Silence or noise: should say it didn't catch the question, not "sorry"
 
 ## Troubleshooting
 

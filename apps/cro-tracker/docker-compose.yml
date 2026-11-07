@@ -8,9 +8,15 @@ services:
       - cro-data:/app/data
       - ./my_companies.csv:/app/my_companies.csv:ro
     ports:
-      - "127.0.0.1:5000:5000"   # only reachable from the server itself; the public goes through caddy
+      - '127.0.0.1:5000:5000' # only reachable from the server itself; the public goes through caddy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/health')"]
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/health')",
+        ]
       interval: 60s
       timeout: 5s
       retries: 3
@@ -20,7 +26,7 @@ services:
     build: .
     restart: unless-stopped
     env_file: .env
-    command: ["python", "scheduler.py"]
+    command: ['python', 'scheduler.py']
     volumes:
       - cro-data:/app/data
       - ./my_companies.csv:/app/my_companies.csv:ro
@@ -31,8 +37,8 @@ services:
     restart: unless-stopped
     env_file: .env
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data

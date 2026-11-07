@@ -1,5 +1,5 @@
 """
-CRO filing tracker — Flask API
+CRO filing tracker: Flask API
 
 What it does (once per day):
   1. Downloads the CRO's daily company snapshot (opendata.cro.ie, CC BY 4.0).
@@ -328,9 +328,9 @@ def build_briefing(report):
 
 
 def print_table(report):
-    """'Show it' — a quick table in the terminal."""
+    """'Show it': a quick table in the terminal."""
     cols = [("status", 10), ("company_num", 9), ("company_name", 38), ("nard", 11), ("deadline", 11), ("days_left", 9)]
-    print(f"\nCRO filing report for {report.get('client', '?')} — as of {report['as_of']} "
+    print(f"\nCRO filing report for {report.get('client', '?')}, as of {report['as_of']} "
           f"(window {report['window_days']} days)")
     print("  ".join(name.upper().ljust(w) for name, w in cols))
     print("  ".join("-" * w for _, w in cols))

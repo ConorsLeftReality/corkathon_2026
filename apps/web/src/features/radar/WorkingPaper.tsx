@@ -25,7 +25,7 @@ export function WorkingPaper({ question, fromPreset, response }: WorkingPaperPro
   return (
     <details className="inset group">
       <summary className="cursor-pointer list-none px-4 py-3 font-semibold text-signal">
-        <h2 className="inline text-body font-semibold underline underline-offset-4 group-open:no-underline">
+        <h2 className="inline text-body font-semibold underline decoration-1 underline-offset-4 group-open:no-underline">
           How this was worked out
         </h2>
       </summary>
