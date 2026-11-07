@@ -1,4 +1,4 @@
-import { IconBolt, IconLayoutDashboard, IconNotes } from '@tabler/icons-react'
+import { IconLayoutDashboard, IconNotes, IconRadar2 } from '@tabler/icons-react'
 import { Outlet } from 'react-router'
 import { DesktopSidebar, MobileSidebar, Sidebar, SidebarLink } from '#src/components/ui/sidebar'
 import type { SidebarItem } from '#src/components/ui/sidebar'
@@ -6,6 +6,7 @@ import { useSession } from '#src/features/auth/SessionProvider.tsx'
 
 const NAV_ITEMS: readonly SidebarItem[] = [
   { to: '/app', label: 'Overview', icon: <IconLayoutDashboard size={18} aria-hidden />, end: true },
+  { to: '/app/radar', label: 'Filing deadlines', icon: <IconRadar2 size={18} aria-hidden /> },
   { to: '/app/notes', label: 'Notes', icon: <IconNotes size={18} aria-hidden /> },
 ]
 
@@ -14,9 +15,9 @@ function Navigation() {
     <nav aria-label="Primary" className="flex flex-col gap-0.5">
       <span className="mb-8 flex items-center gap-3 px-2.5 font-semibold text-ink">
         <span className="flex size-5 shrink-0 items-center justify-center">
-          <IconBolt size={20} aria-hidden />
+          <IconRadar2 size={20} aria-hidden />
         </span>
-        <span className="whitespace-pre">Corkathon</span>
+        <span className="whitespace-pre">Filing Radar</span>
       </span>
       {NAV_ITEMS.map((item) => (
         <SidebarLink key={item.to} link={item} />
@@ -45,7 +46,7 @@ export function Shell() {
               Sign out
             </button>
           </header>
-          <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-8">
+          <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-8">
             <Outlet />
           </main>
         </div>

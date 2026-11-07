@@ -6,6 +6,7 @@ import { LoginPage } from '#src/routes/LoginPage.tsx'
 import { NotesPage } from '#src/routes/NotesPage.tsx'
 import { NotFoundPage } from '#src/routes/NotFoundPage.tsx'
 import { OverviewPage } from '#src/routes/OverviewPage.tsx'
+import { RadarPage } from '#src/routes/RadarPage.tsx'
 import { RequireSession } from '#src/routes/RequireSession.tsx'
 import { Shell } from '#src/shell/Shell.tsx'
 
@@ -23,6 +24,7 @@ const router = createBrowserRouter([
         element: <Shell />,
         children: [
           { index: true, element: <OverviewPage /> },
+          { path: 'radar', element: <RadarPage /> },
           { path: 'notes', element: <NotesPage /> },
         ],
       },
