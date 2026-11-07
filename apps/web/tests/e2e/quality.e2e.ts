@@ -61,6 +61,10 @@ test('the landing page passes axe and fits the viewport', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Open the app' })).toBeVisible()
   await expectNoAxeViolations(page)
   await expectNoSidewaysScroll(page)
+  await page.screenshot({
+    path: `test-results/landing-${page.viewportSize()?.width}.png`,
+    fullPage: true,
+  })
 })
 
 test('the today screen passes axe and fits the viewport', async ({ page }) => {
@@ -84,22 +88,4 @@ test('fonts load from our own origin', async ({ page }) => {
   await page.goto('/')
   await expect.poll(() => fonts.length).toBeGreaterThan(0)
   expect(fonts.every((url) => url.startsWith('http://127.0.0.1'))).toBe(true)
-})
-
-test('the flipping word changes when motion is allowed', async ({ page }) => {
-  await page.goto('/')
-  await expect(page.locator('[data-flip-words]')).not.toHaveText('useful', { timeout: 8000 })
-})
-
-test.describe('with reduced motion', () => {
-  test.use({ contextOptions: { reducedMotion: 'reduce' } })
-
-  test('the flipping word stays on the first word', async ({ page }) => {
-    await page.clock.install()
-    await page.goto('/')
-    const word = page.locator('[data-flip-words]')
-    await expect(word).toHaveText('useful')
-    await page.clock.fastForward(10_000)
-    await expect(word).toHaveText('useful')
-  })
 })

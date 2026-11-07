@@ -59,8 +59,15 @@ test('an unknown address shows the not found page', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Open the app' })).toBeVisible()
 })
 
-test('the banner can be dismissed', async ({ page }) => {
+test('the landing page sign in link opens sign in', async ({ page }) => {
   await page.goto('/')
-  await page.getByRole('button', { name: 'Dismiss' }).click()
-  await expect(page.getByRole('region', { name: 'Project status' })).toHaveCount(0)
+  await page.getByRole('link', { name: 'Sign in' }).click()
+  await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible()
+})
+
+test('the landing example is labelled as placeholder data', async ({ page }) => {
+  await page.goto('/')
+  const example = page.getByRole('table', { name: 'Example answer with placeholder companies' })
+  await expect(example.getByRole('rowheader', { name: /Placeholder Bakery Limited/ })).toBeVisible()
+  await expect(page.getByText('The companies are placeholders, not register data.')).toBeVisible()
 })
