@@ -1,0 +1,19 @@
+{
+  "healthchecks": {
+    "web": [
+      {
+        "type": "startup",
+        "name": "api health",
+        "path": "/api/health",
+        "attempts": 5,
+        "wait": 3
+      }
+    ]
+  },
+  "cron": [
+    {
+      "command": "python scheduler.py --once",
+      "schedule": "5 0 * * *"
+    }
+  ]
+}
