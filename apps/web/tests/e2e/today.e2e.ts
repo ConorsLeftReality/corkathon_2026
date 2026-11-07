@@ -262,3 +262,20 @@ test('today reads the real filings api behind sign in', async ({ page }) => {
   await expect(page.getByRole('alert')).toHaveCount(0)
   await expect(overdue.getByRole('rowheader', { name: /E2E OVERDUE LIMITED/ })).toBeVisible()
 })
+
+test('an account without access is told to ask for it', async ({ page }) => {
+  await stubFilings(page, {
+    reportBody: {
+      error: {
+        code: 'filings_forbidden',
+        message: 'This account cannot see the filings report. Ask your admin to add your email.',
+      },
+    },
+    reportStatus: 403,
+  })
+  await openToday(page)
+  await expect(page.getByRole('alert')).toHaveText(
+    'This account cannot see the filings report. Ask your admin to add your email.',
+  )
+  await expect(page.getByRole('table')).toHaveCount(0)
+})

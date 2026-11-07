@@ -27,3 +27,5 @@ class Settings(BaseSettings):
     filings_window_days: int = Field(default=30, ge=1, le=365)
     # a fixed date for a reproducible demo, today when unset
     filings_as_of: date | None = None
+    # comma separated, when set only these accounts can read the shared client report
+    filings_allowed_emails: str = ""
