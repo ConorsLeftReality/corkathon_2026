@@ -13,7 +13,9 @@ The Today screen at `/app` reads this one. It runs inside the main Flask app (`a
 | `FILINGS_AS_OF` | today | A fixed date for a reproducible demo |
 | `FILINGS_ALLOWED_EMAILS` | not set | Comma separated emails. When set, only those accounts can read the report; everyone else gets `403 filings_forbidden` |
 
-Sign-up is open and the client list is shared, so **set `FILINGS_ALLOWED_EMAILS` before you put a real `my_companies.csv` on the server**. Without it, anyone who creates an account can read the list. The app logs a warning at start-up when a client list exists and no allowlist is set. Leaving it unset is fine while the demo list of public companies is in use. On the Pi: `dokku config:set corkathon2026 FILINGS_ALLOWED_EMAILS=you@example.com,teammate@example.com`.
+Sign-up is open and the client list is shared, so **set `FILINGS_ALLOWED_EMAILS` before you put a real `my_companies.csv` on the server**. Without it, anyone who creates an account can read the list. The app logs a warning at start-up when a client list exists and no allowlist is set. Leaving it unset is fine while the demo list of public companies is in use.
+
+Sign-up does not check that people own the email they register, so an allowlisted address counts for whoever registers it first. Have every allowed person create their account **before** you set the list; after that an impostor cannot take the address, because emails are unique. Email verification or admin-granted access would close this properly. On the Pi: `dokku config:set corkathon2026 FILINGS_ALLOWED_EMAILS=you@example.com,teammate@example.com`.
 
 Without a `my_companies.csv` in the data folder, the report uses Matteo's demo list (Ryanair, Kerry Group, CRH and one fake number). On the first request of the day the app downloads the CRO snapshot (about 47 MB) in the background and answers `503 filings_building` until it is ready; the page shows that message with a retry button. To use your own list on the Pi, copy it into the app's `/data/filings/` volume and press Rebuild report.
 
