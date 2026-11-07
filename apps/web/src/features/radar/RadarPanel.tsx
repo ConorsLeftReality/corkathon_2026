@@ -77,21 +77,10 @@ function PresetList({
   )
 }
 
-type ResultProps = {
-  state: RadarState
-  presets: readonly Preset[]
-  onPick: (preset: Preset) => void
-}
-
-function RadarResult({ state, presets, onPick }: ResultProps) {
+function RadarResult({ state }: { state: RadarState }) {
   switch (state.status) {
     case 'idle':
-      return (
-        <div className="flex flex-col gap-3">
-          <p className="text-graphite">Ask in your own words, or start with one of these.</p>
-          <PresetList presets={presets} onPick={onPick} />
-        </div>
-      )
+      return null
     case 'loading':
       return (
         <p role="status" className="text-graphite">
@@ -107,13 +96,11 @@ function RadarResult({ state, presets, onPick }: ResultProps) {
           {state.code === 'radar_llm_unavailable' && (
             <>
               <p className="text-graphite">These questions still work, because they skip the AI.</p>
-              <PresetList presets={presets} onPick={onPick} />
             </>
           )}
           {(state.code === 'radar_building' || state.code === 'filings_building') && (
             <>
-              <p className="text-graphite">Ask again in a minute:</p>
-              <PresetList presets={presets} onPick={onPick} />
+              <p className="text-graphite">Pick an example question again in a minute.</p>
             </>
           )}
         </div>
@@ -155,6 +142,7 @@ export function RadarPanel({ initialMode, onSessionLost }: RadarPanelProps) {
   const { state, ask, reset } = useRadar(mode, onSessionLost)
   const questionId = useId()
   const presets = PRESETS[mode]
+  const sortedPresets = [...presets].sort((a, b) => a.question.localeCompare(b.question))
 
   function changeMode(next: RadarMode) {
     setMode(next)
@@ -198,7 +186,14 @@ export function RadarPanel({ initialMode, onSessionLost }: RadarPanelProps) {
           </button>
         </div>
       </form>
-      <RadarResult state={state} presets={presets} onPick={pick} />
+      <div className="flex flex-col gap-3">
+        {state.status === 'idle' && (
+          <p className="text-graphite">Ask in your own words, or start with one of these.</p>
+        )}
+        {/* stays on screen after a pick so you can try the next one */}
+        <PresetList presets={sortedPresets} onPick={pick} />
+      </div>
+      <RadarResult state={state} />
       <p className="mt-auto pt-6 text-micro text-graphite">
         Contains Companies Registration Office data, licensed under CC BY 4.0. Penalties are
         estimates, not legal advice.
