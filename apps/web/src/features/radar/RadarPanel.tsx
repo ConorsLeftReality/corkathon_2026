@@ -110,6 +110,12 @@ function RadarResult({ state, presets, onPick }: ResultProps) {
               <PresetList presets={presets} onPick={onPick} />
             </>
           )}
+          {(state.code === 'radar_building' || state.code === 'filings_building') && (
+            <>
+              <p className="text-graphite">Ask again in a minute:</p>
+              <PresetList presets={presets} onPick={onPick} />
+            </>
+          )}
         </div>
       )
     case 'reply':

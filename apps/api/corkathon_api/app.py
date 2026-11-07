@@ -11,6 +11,8 @@ from corkathon_api.features.filings.routes import filings_routes
 from corkathon_api.features.filings.service import FilingsService
 from corkathon_api.features.health import health_routes
 from corkathon_api.features.notes.routes import notes_routes
+from corkathon_api.features.radar.routes import radar_routes
+from corkathon_api.features.radar.service import RadarService
 from corkathon_api.http_errors import register_error_handlers
 from corkathon_api.logging_setup import configure_logging, logger
 from corkathon_api.rate_limit import RateLimiter
@@ -78,6 +80,8 @@ def create_app(settings: Settings | None = None) -> Flask:
             "filings client list is readable by every account, set FILINGS_ALLOWED_EMAILS"
         )
     app.register_blueprint(filings_routes)
+    app.extensions["radar"] = RadarService(app.extensions["filings"])
+    app.register_blueprint(radar_routes)
     register_web_app(app, resolved.web_dist)
 
     @app.after_request
