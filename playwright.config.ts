@@ -15,10 +15,11 @@ mkdirSync(filings)
 writeFileSync(
   join(filings, `cro_companies_${FILINGS_AS_OF}.csv.zip`),
   [
-    'company_num,company_name,company_status,nard',
-    '700001,E2E OVERDUE LIMITED,Normal,2026-09-01',
-    '700002,E2E DUE LIMITED,Normal,2026-09-20',
-    '700003,E2E FINE LIMITED,Normal,2027-01-01',
+    'company_num,company_name,company_status,company_reg_date,nard,nace_v2_code,eircode,company_address_4',
+    '700001,E2E OVERDUE LIMITED,Normal,2020-01-01,2026-09-01,,T23AB12,CORK',
+    '700002,E2E DUE LIMITED,Normal,2020-01-01,2026-09-20,,,GALWAY',
+    '700003,E2E FINE LIMITED,Normal,2026-11-06,2027-01-01,,,DUBLIN',
+    '700010,E2E HARBOUR CAFE LIMITED,Normal,2019-01-01,2026-03-01,56.10,T12AB12,CORK',
   ].join('\n'),
 )
 writeFileSync(join(filings, 'my_companies.csv'), 'company_num\n700001\n700002\n700003\n')
@@ -51,6 +52,8 @@ export default defineConfig({
       AUTH_RATE_LIMIT_PER_MINUTE: '100000',
       FILINGS_DATA_DIR: filings,
       FILINGS_AS_OF,
+      // pinned so a developer's own .env allowlist never locks out the test accounts
+      FILINGS_ALLOWED_EMAILS: '',
     },
   },
 })
