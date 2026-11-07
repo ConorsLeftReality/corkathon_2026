@@ -11,10 +11,10 @@ Built at Corkathon, Cork, 7 November 2026, for the Frame sponsor track and IGNIT
 | Feature | Status |
 |---|---|
 | **Prospects mode**: "Which Cork hospitality companies are overdue on their annual return?" returns a ranked list of new-business leads | Planned |
-| **Clients mode**: upload your client company numbers, ask "Who do I need to chase this week?" | Planned |
+| **Clients mode**: upload your client company numbers, ask "Who do I need to chase this week?" | Web UI built (client list on `/app`, questions on `/app/radar`), API Planned |
 | **Honesty panel**: every web answer shows the filter that was run, the SQL, the row count and the data snapshot date | Web UI built at `/app/radar`, API Planned |
 | **Desk phone**: dial 100, press 1 (this week's deadlines), 2 (overdue Cork companies) or 3 (ask a question out loud) | Planned |
-| **Morning briefing**: the phone rings and reads the day's key deadlines | Planned |
+| **Morning briefing**: the phone rings and reads the day's key deadlines | Planned. The same briefing on screen is the Today page at `/app` (web UI built, API Planned) |
 | **Company brief**: click a company for status, filing history and sector | Planned (stretch) |
 
 ## How it works in 60 seconds
