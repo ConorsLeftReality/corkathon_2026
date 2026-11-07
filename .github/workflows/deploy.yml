@@ -1,0 +1,44 @@
+name: Deploy to Raspberry Pi
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # lets you trigger a deploy manually from the Actions tab
+
+# Never run two deploys at once on a 906 MiB Pi
+concurrency:
+  group: deploy-pi
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Dokku rejects pushes from shallow clones
+
+      - name: Join Tailscale network
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          ping: ${{ secrets.PI_TAILSCALE_IP }}
+
+      - name: Push to Dokku
+        env:
+          SSH_KEY: ${{ secrets.DOKKU_SSH_KEY }}
+          PI_IP: ${{ secrets.PI_TAILSCALE_IP }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$PI_IP" >> ~/.ssh/known_hosts
+
+          git remote add dokku "dokku@$PI_IP:corkathon2026"
+          GIT_SSH_COMMAND="ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes" \
+            git push dokku HEAD:refs/heads/main --force
