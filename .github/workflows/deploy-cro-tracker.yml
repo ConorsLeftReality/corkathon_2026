@@ -1,0 +1,61 @@
+name: Deploy cro-tracker
+
+on:
+  push:
+    branches: [main]
+    paths: # only redeploy when the tracker changes
+      - "apps/cro-tracker/**"
+      - ".github/workflows/deploy-cro-tracker.yml"
+  workflow_dispatch: # lets you trigger a deploy manually from the Actions tab
+
+env:
+  DOKKU_APP: cro-tracker # Dokku builds it from apps/cro-tracker/ (builder:set build-dir)
+
+# Never run two deploys at once on a 906 MiB Pi
+concurrency:
+  group: deploy-pi
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out code
+        # Pinned to a commit so a moved tag can't change what runs. This is what v4 pointed to on 2026-11-07.
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0 # Dokku rejects pushes from shallow clones
+          persist-credentials: false
+
+      - name: Join Tailscale network
+        # Pinned to a commit: this step receives the Tailscale OAuth secret. This is what v4 pointed to on 2026-11-07.
+        uses: tailscale/github-action@064b10558093f38325e838ddea35486bdc6b1d5c # v4.4.0
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:corkathon-ci
+          ping: ${{ secrets.PI_TAILSCALE_IP }}
+
+      - name: Push to Dokku
+        env:
+          SSH_KEY: ${{ secrets.DOKKU_SSH_KEY }}
+          PI_IP: ${{ secrets.PI_TAILSCALE_IP }}
+        run: |
+          mkdir -p ~/.ssh
+          # DOKKU_SSH_KEY holds the private key as a single base64 line
+          CLEAN="$(printf '%s' "$SSH_KEY" | tr -d '\r\n ')"
+          printf '%s' "$CLEAN" | base64 -d > ~/.ssh/deploy_key \
+            || { echo "DOKKU_SSH_KEY is not a clean base64 line - re-copy it"; exit 1; }
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null \
+            || { echo "DOKKU_SSH_KEY is not a valid key"; exit 1; }
+          ssh-keyscan -H "$PI_IP" >> ~/.ssh/known_hosts
+
+          git remote add dokku "dokku@$PI_IP:$DOKKU_APP"
+          GIT_SSH_COMMAND="ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes" \
+            git push dokku HEAD:refs/heads/main --force

@@ -1,0 +1,46 @@
+services:
+  # The Flask API that Evan's site calls
+  api:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - cro-data:/app/data
+      - ./my_companies.csv:/app/my_companies.csv:ro
+    ports:
+      - "127.0.0.1:5000:5000"   # only reachable from the server itself; the public goes through caddy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/health')"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+
+  # The daily job: downloads the CRO snapshot and rebuilds report.json + briefing.txt
+  job:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    command: ["python", "scheduler.py"]
+    volumes:
+      - cro-data:/app/data
+      - ./my_companies.csv:/app/my_companies.csv:ro
+
+  # HTTPS in front of the API, with automatic Let's Encrypt certificates
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - api
+
+volumes:
+  cro-data:
+  caddy-data:
+  caddy-config:

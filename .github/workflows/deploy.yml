@@ -1,14 +1,21 @@
-name: Deploy to Raspberry Pi
+name: Deploy corkathon2026
 
 on:
   push:
     branches: [main]
+    paths-ignore: # changes only inside these do not redeploy the site
+      - "apps/cro-tracker/**"
+      - "apps/phone/**"
+      - ".github/workflows/deploy-cro-tracker.yml"
   workflow_dispatch: # lets you trigger a deploy manually from the Actions tab
 
 # Never run two deploys at once on a 906 MiB Pi
 concurrency:
   group: deploy-pi
   cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
   deploy:
@@ -17,12 +24,12 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0 (what v4 pointed to on 2026-11-07)
         with:
           fetch-depth: 0 # Dokku rejects pushes from shallow clones
 
       - name: Join Tailscale network
-        uses: tailscale/github-action@v4
+        uses: tailscale/github-action@064b10558093f38325e838ddea35486bdc6b1d5c # v4.4.0 (what v4 pointed to on 2026-11-07)
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
@@ -37,7 +44,6 @@ jobs:
           mkdir -p ~/.ssh
           # DOKKU_SSH_KEY holds the private key as a single base64 line
           CLEAN="$(printf '%s' "$SSH_KEY" | tr -d '\r\n ')"
-          echo "Secret length: ${#CLEAN} chars, starts with: ${CLEAN:0:12}"
           printf '%s' "$CLEAN" | base64 -d > ~/.ssh/deploy_key \
             || { echo "DOKKU_SSH_KEY is not a clean base64 line - re-copy it"; exit 1; }
           chmod 600 ~/.ssh/deploy_key

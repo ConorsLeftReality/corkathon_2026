@@ -1,0 +1,13 @@
+# Linux without Docker: runs the daily job once. Started by cro-job.timer.
+
+[Unit]
+Description=CRO filing tracker daily job
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=cro
+WorkingDirectory=/opt/cro-tracker
+EnvironmentFile=/opt/cro-tracker/.env
+ExecStart=/opt/cro-tracker/venv/bin/python scheduler.py --once
