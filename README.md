@@ -19,11 +19,13 @@ Built at Corkathon, Cork, 7 November 2026, for the Frame sponsor track and IGNIT
 
 ## How it works in 60 seconds
 
-1. A script downloads the CRO "Company Records" open dataset (CC BY 4.0) and loads it into a local DuckDB file. A freshness check flags the snapshot as stale if its newest registration is more than about 7 days old.
+1. Planned: a script will download the CRO "Company Records" open dataset (CC BY 4.0) and load it into a local DuckDB file. A freshness check will flag the snapshot as stale if its newest registration is more than about 7 days old.
 2. Rules in code add derived fields: days to the next annual return date, overdue flag, days overdue, estimated late penalty, Eircode routing key and NACE sector label.
 3. A question in plain English goes to Claude, which may only answer with a JSON filter that must pass a fixed schema. **The model never computes dates, money or counts.**
 4. Code turns the filter into parameterised SQL, runs it on DuckDB, and writes the answer sentence from the result rows, always with the row count and snapshot date.
 5. The same engine answers the web page (React on Flask) and the desk phone (a Cisco IP phone wired to a Raspberry Pi running Asterisk, with speech to text going in and Piper text to speech coming out).
+
+The DuckDB data pipeline and radar question engine are planned, not implemented in the current repository. The built application is the React and Flask scaffold with Flask-SQLAlchemy, sign-in, client-list UI, and radar UI backed by development mock responses.
 
 ```mermaid
 flowchart LR
@@ -55,20 +57,20 @@ Add your Claude API key to `.env` (**Planned**, nothing reads it yet):
 echo "ANTHROPIC_API_KEY=sk-ant-..." >> .env
 ```
 
-Fetch and load the data (**Planned**):
+Fetch and load the data (**Planned; these commands are not implemented yet**):
 
 ```bash
 bun run radar:fetch
 bun run radar:check
 ```
 
-Run the backend and web page (**Built**; the pages show real data once the radar API exists):
+Run the backend and web page (**Built**; the current scaffold does not use DuckDB or show live radar data):
 
 ```bash
 bun run dev
 ```
 
-Open http://localhost:5173 and sign in. The Today screen reads the filings routes in the main Flask app, which download the CRO snapshot on first use (details in [docs/api-contract.md](docs/api-contract.md)).
+Open http://localhost:5173 and sign in. The current Today and Radar screens use the scaffold routes and development data; the live CRO snapshot and radar API are not implemented yet.
 
 Until the radar API exists, run the web app against a mock instead (**Built**, dev only):
 
