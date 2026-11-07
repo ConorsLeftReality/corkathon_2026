@@ -38,23 +38,23 @@ install -d -o asterisk -g asterisk "$SPOOL" && ok "$SPOOL ready"
 
 echo "== 2. Python libraries as the asterisk user"
 $PY -m pip --version >/dev/null 2>&1 || { warn "pip missing - installing python3-pip"; apt-get install -y python3-pip >/dev/null; }
-if $AS $PY -c "import speech_recognition, gtts" 2>/dev/null; then
-  ok "speech_recognition + gtts importable"
+if $AS $PY -c "import speech_recognition" 2>/dev/null; then
+  ok "speech_recognition importable"
 else
   warn "not importable by asterisk - installing system-wide"
-  $PY -m pip install SpeechRecognition gTTS 2>/dev/null \
-    || $PY -m pip install --break-system-packages SpeechRecognition gTTS
-  $AS $PY -c "import speech_recognition, gtts" 2>/dev/null \
-    && ok "now importable" || bad "still can't import speech_recognition/gtts as asterisk"
+  $PY -m pip install SpeechRecognition 2>/dev/null \
+    || $PY -m pip install --break-system-packages SpeechRecognition
+  $AS $PY -c "import speech_recognition" 2>/dev/null \
+    && ok "now importable" || bad "still can't import speech_recognition as asterisk"
 fi
 
 echo "== 3. Binaries and voice"
 [ -x $FFMPEG ] && ok "ffmpeg $FFMPEG" || bad "ffmpeg missing at $FFMPEG (apt install ffmpeg)"
 # SpeechRecognition only bundles flac for x86; on a Pi (ARM64) Google STT needs the system one
 command -v flac >/dev/null && ok "flac $(command -v flac)" || bad "flac missing (sudo apt install flac) - Google STT needs it on ARM"
-[ -x $PIPER ]  && ok "piper $PIPER"   || warn "piper missing - no offline fallback"
-$AS test -r "$VOICE"      && ok "voice model readable"      || warn "$VOICE not readable by asterisk"
-$AS test -r "$VOICE.json" && ok "voice config readable"     || warn "$VOICE.json missing - piper will fail"
+[ -x $PIPER ]  && ok "piper $PIPER"   || bad "piper missing at $PIPER - all speech comes from piper now"
+$AS test -r "$VOICE"      && ok "voice model readable"      || bad "$VOICE not readable by asterisk"
+$AS test -r "$VOICE.json" && ok "voice config readable"     || bad "$VOICE.json missing - piper will fail"
 
 echo "== 4. CRO report"
 if $AS $PY - "$CLIENT" <<'EOF'
@@ -79,7 +79,22 @@ echo "== 5. Network"
 $AS $PY -c "import urllib.request as u; u.urlopen('https://www.google.com', timeout=5)" 2>/dev/null \
   && ok "internet reachable" || warn "no internet - Google STT will fail (set TTS_ENGINE=piper for TTS)"
 
-echo "== 6. End-to-end test (exactly as Asterisk runs it)"
+echo "== 6. Pre-render every answer with piper (slow on the Pi - several minutes the first time)"
+cat > /etc/cron.d/filing-radar <<CRON
+# Filing Radar: re-render phone answers every hour. Only new or changed answers
+# are rendered, so most runs take seconds. flock stops two runs overlapping.
+SHELL=/bin/sh
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+30 * * * * asterisk flock -n /tmp/filing-radar-pregen.lock $PY $SCRIPT --pregenerate >> $SPOOL/pregen.log 2>&1
+CRON
+chmod 644 /etc/cron.d/filing-radar && ok "cron installed: /etc/cron.d/filing-radar (every hour at :30)"
+if $AS flock -n /tmp/filing-radar-pregen.lock $PY "$SCRIPT" --pregenerate; then
+  ok "answers rendered to $($AS $PY -c "import sys; sys.path.insert(0,'$APP'); import transcribe_audio as t; print(t.load_env()['TTS_CACHE'])")"
+else
+  bad "pre-render had problems - see output above"
+fi
+
+echo "== 7. End-to-end test (exactly as Asterisk runs it)"
 WAV=${1:-$(ls -t $SPOOL/q-*.wav 2>/dev/null | head -1)}
 if [ -z "${WAV:-}" ] || [ ! -f "$WAV" ]; then
   warn "no q-*.wav to test with - pass one: sudo bash $0 /path/q-test.wav"

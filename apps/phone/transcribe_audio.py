@@ -5,12 +5,19 @@ Filing Radar - phone option 3 (ask a question).
 Called by Asterisk:
     /usr/bin/python3 /opt/filing-radar/transcribe_audio.py <input.wav> <output_path> [client]
 
+Called by cron (every hour, see deploy_option3.sh):
+    /usr/bin/python3 /opt/filing-radar/transcribe_audio.py --pregenerate [client ...]
+
 1. Speech-to-text on the caller's WAV  (SpeechRecognition + Google, like prova.py)
 2. Answer from the same CRO report the dashboard uses. With REPORT_URL set
    (e.g. http://127.0.0.1:9001/api/{client}/report) it asks the tracker API;
    otherwise it reads REPORT_PATH. {client} is the 3rd argument, or
    DEFAULT_CLIENT from .env.
-3. Text-to-speech (gTTS, fallback piper) -> <output_path>.wav, 8 kHz mono 16-bit
+3. Plays a clip that --pregenerate already rendered with piper -> <output_path>.wav
+   (8 kHz mono 16-bit). Piper is far too slow on the Pi to run during a call, so
+   every possible answer for every client is rendered ahead of time and looked
+   up by its exact text. If an answer isn't in the cache, the caller hears
+   "I don't have that answer ready yet".
 Exit 0 on success; anything else makes Asterisk play "sorry".
 
 Only stdlib is imported at module level, so a missing package is logged
@@ -21,6 +28,8 @@ import difflib
 import json
 import os
 import re
+import hashlib
+import shutil
 import signal
 import subprocess
 import sys
@@ -38,14 +47,26 @@ DEFAULTS = {
     "FFMPEG": "/usr/bin/ffmpeg",
     "PIPER": "/usr/local/bin/piper",
     "PIPER_VOICE": "/opt/piper-voices/en_GB-alan-low.onnx",
-    "TTS_ENGINE": "gtts",        # "gtts" (falls back to piper) or "piper"
+    "TTS_CACHE": "/var/spool/asterisk/radar/tts-cache",  # pre-rendered answers
+    "LIVE_PIPER": "0",           # 1 = try piper live on a cache miss (too slow on the Pi)
     "STT_LANG": "en-IE",
     "WINDOW_DAYS": "30",         # only used if a row has no status
 }
 WATCHDOG_S = 22                  # Asterisk gives up at 25
 STT_TIMEOUT_S = 8
-GTTS_TIMEOUT_S = 5
 REPORT_URL_TIMEOUT_S = 4
+PREGEN_REPORT_TIMEOUT_S = 600    # the API may rebuild the report first
+PREGEN_CLIP_TIMEOUT_S = 240      # one piper call for one clip (Pi is slow to load the model)
+
+# Fixed replies, always pre-rendered
+NOT_CAUGHT = "Sorry, I didn't catch your question. Please try again."
+REPORT_ERROR = "Sorry, I can't read today's filing report right now."
+NOT_READY = "Sorry, I don't have that answer ready yet. Please try again later."
+NO_COMPANIES = "I couldn't find any tracked companies in today's report."
+# Questions whose answers are pre-rendered for every client (plus one line per company)
+PREGEN_QUESTIONS = ("give me a summary", "which companies are overdue", "what is due",
+                    "what is due today", "what is due tomorrow", "what is due this week",
+                    "which companies are dissolved")
 CLIENT_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
 
 T0 = time.time()
@@ -223,19 +244,19 @@ def report_source(cfg, client=""):
     return src
 
 
-def read_report(source):
+def read_report(source, timeout=REPORT_URL_TIMEOUT_S):
     if source.startswith(("http://", "https://")):
         import urllib.request
         req = urllib.request.Request(source, headers={"User-Agent": "filing-radar-phone/1.0"})
-        with urllib.request.urlopen(req, timeout=REPORT_URL_TIMEOUT_S) as r:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
             return json.load(r)
     with open(source) as f:
         return json.load(f)
 
 
-def load_companies(source, window_days, today):
+def load_companies(source, window_days, today, timeout=REPORT_URL_TIMEOUT_S):
     """source: a file path, an http(s) URL, or already-parsed report data."""
-    data = read_report(source) if isinstance(source, str) else source
+    data = read_report(source, timeout) if isinstance(source, str) else source
 
     rows = []
     if isinstance(data, list):
@@ -371,7 +392,7 @@ def _sorted(cs):
 
 def answer(question, companies, today):
     if not companies:
-        return "I couldn't find any tracked companies in today's report."
+        return NO_COMPANIES
     q = question.lower()
 
     c = find_company(question, companies)
@@ -436,46 +457,137 @@ def transcribe(path, lang):
         return ""
 
 
-def to_8k(cfg, src, dst):
+def to_8k(cfg, src, dst, timeout=8):
     subprocess.run([cfg["FFMPEG"], "-y", "-loglevel", "error", "-i", src,
                     "-ar", "8000", "-ac", "1", "-c:a", "pcm_s16le", dst],
-                   check=True, timeout=8, capture_output=True)
+                   check=True, timeout=timeout, capture_output=True)
 
 
-def tts_gtts(text, mp3):
-    from gtts import gTTS                     # same library as prova.py
-    try:
-        t = gTTS(text=text, lang="en", tld="ie", timeout=GTTS_TIMEOUT_S)
-    except TypeError:                         # older gTTS without timeout
-        t = gTTS(text=text, lang="en", tld="ie")
-    t.save(mp3)
-
-
-def tts_piper(cfg, text, wav):
+def tts_piper(cfg, text, wav, timeout=10):
     subprocess.run([cfg["PIPER"], "--model", cfg["PIPER_VOICE"], "--output_file", wav],
-                   input=text, text=True, check=True, timeout=10, capture_output=True)
+                   input=text, text=True, check=True, timeout=timeout, capture_output=True)
+
+
+def cache_file(cfg, text):
+    """The pre-rendered clip for this exact reply text."""
+    key = hashlib.sha1(" ".join(text.lower().split()).encode()).hexdigest()[:20]
+    return os.path.join(cfg["TTS_CACHE"], key + ".wav")
 
 
 def synthesize(cfg, text, out_wav):
-    tmpdir = tempfile.mkdtemp(prefix="radar-")
-    try:
-        if cfg["TTS_ENGINE"].lower() != "piper":
+    """Copy the pre-rendered clip for this reply; never runs gTTS."""
+    cached = cache_file(cfg, text)
+    if os.path.exists(cached):
+        shutil.copyfile(cached, out_wav)
+        log("TTS: cache", os.path.basename(cached))
+        return
+    log("TTS: not in cache (run --pregenerate):", os.path.basename(cached))
+    if cfg["LIVE_PIPER"] == "1":
+        left = WATCHDOG_S - (time.time() - T0) - 2
+        if left > 3:
+            tmpdir = tempfile.mkdtemp(prefix="radar-")
             try:
-                mp3 = os.path.join(tmpdir, "tts.mp3")
-                tts_gtts(text, mp3)
-                to_8k(cfg, mp3, out_wav)
-                log("TTS: gtts")
+                raw = os.path.join(tmpdir, "tts.wav")
+                tts_piper(cfg, text, raw, timeout=left - 1)
+                to_8k(cfg, raw, out_wav)
+                log("TTS: piper live")
                 return
             except Exception as e:
-                log(f"gTTS failed ({type(e).__name__}: {e}), falling back to piper")
-        raw = os.path.join(tmpdir, "tts.wav")
-        tts_piper(cfg, text, raw)
-        to_8k(cfg, raw, out_wav)
-        log("TTS: piper")
+                log(f"live piper failed ({type(e).__name__})")
+            finally:
+                shutil.rmtree(tmpdir, ignore_errors=True)
+    fallback = cache_file(cfg, NOT_READY)
+    if not os.path.exists(fallback):
+        raise FileNotFoundError(f"no cached clip and no fallback in {cfg['TTS_CACHE']} - run --pregenerate")
+    shutil.copyfile(fallback, out_wav)
+    log("TTS: fallback 'not ready' clip")
+
+
+# ---------------------------------------------------------- pre-generation
+def list_clients(cfg):
+    """Ask the tracker API for its clients (derived from REPORT_URL)."""
+    url = cfg["REPORT_URL"]
+    if "{client}" not in url:
+        return []
+    clients_url = url.split("{client}")[0].rstrip("/") + "/clients"
+    data = read_report(clients_url, PREGEN_REPORT_TIMEOUT_S)
+    return [c["client"] for c in data if isinstance(c, dict) and c.get("client")]
+
+
+def render_clips(cfg, jobs):
+    """jobs: {final_wav_path: text}. Loads the piper model once for all clips
+    (--json-input); any clip that batch mode didn't produce is rendered alone."""
+    if not jobs:
+        return 0
+    os.makedirs(cfg["TTS_CACHE"], exist_ok=True)
+    tmpdir = tempfile.mkdtemp(prefix="pregen-", dir=cfg["TTS_CACHE"])
+    raw = {final: os.path.join(tmpdir, f"{i}.wav") for i, final in enumerate(jobs)}
+    failed = 0
+    try:
+        lines = "".join(json.dumps({"text": jobs[f], "output_file": raw[f]}) + "\n" for f in jobs)
+        log(f"piper: rendering {len(jobs)} clip(s) in one batch...")
+        try:
+            subprocess.run([cfg["PIPER"], "--model", cfg["PIPER_VOICE"], "--json-input",
+                            "--output_dir", tmpdir], input=lines, text=True, check=True,
+                           timeout=120 + 60 * len(jobs), capture_output=True)
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+            log(f"batch mode failed ({type(e).__name__}); rendering one at a time")
+        for final, text in jobs.items():
+            try:
+                r = raw[final]
+                if not (os.path.exists(r) and os.path.getsize(r) > 44):
+                    log("piper (single):", text[:60])
+                    tts_piper(cfg, text, r, timeout=PREGEN_CLIP_TIMEOUT_S)
+                tmp = final + ".part.wav"
+                to_8k(cfg, r, tmp, timeout=60)
+                os.replace(tmp, final)
+            except Exception as e:
+                failed += 1
+                log(f"FAILED clip ({type(e).__name__}: {e}): {text[:60]}")
     finally:
-        for f in os.listdir(tmpdir):
-            os.remove(os.path.join(tmpdir, f))
-        os.rmdir(tmpdir)
+        shutil.rmtree(tmpdir, ignore_errors=True)
+    return failed
+
+
+def pregenerate(cfg, clients):
+    today = datetime.date.today()
+    all_clients = not clients
+    if all_clients:
+        try:
+            clients = list_clients(cfg)
+        except (OSError, ValueError) as e:
+            log(f"couldn't list clients ({type(e).__name__}: {e})")
+            clients = []
+        if not clients and cfg["DEFAULT_CLIENT"]:
+            clients = [cfg["DEFAULT_CLIENT"]]
+    texts = {NOT_CAUGHT, REPORT_ERROR, NOT_READY, NO_COMPANIES}
+    problems = 0
+    for client in clients:
+        try:
+            src = report_source(cfg, client)
+            cs = load_companies(src, int(cfg["WINDOW_DAYS"]), today, timeout=PREGEN_REPORT_TIMEOUT_S)
+        except (OSError, ValueError) as e:
+            log(f"{client}: report error ({type(e).__name__}: {e})")
+            problems += 1
+            continue
+        before = len(texts)
+        texts.update(answer(q, cs, today) for q in PREGEN_QUESTIONS)
+        texts.update(company_sentence(c, today) for c in cs)
+        log(f"{client}: {len(cs)} companies, {len(texts) - before} new answer(s)")
+    texts = {numbers_to_words(t) for t in texts}
+    wanted = {cache_file(cfg, t): t for t in texts}
+    todo = {f: t for f, t in wanted.items() if not os.path.exists(f)}
+    log(f"{len(wanted)} answers needed, {len(wanted) - len(todo)} already cached, {len(todo)} to render")
+    problems += render_clips(cfg, todo)
+
+    # Remove clips nobody can ask for any more (only after a clean run over every client)
+    if all_clients and problems == 0 and os.path.isdir(cfg["TTS_CACHE"]):
+        for name in os.listdir(cfg["TTS_CACHE"]):
+            path = os.path.join(cfg["TTS_CACHE"], name)
+            if name.endswith(".wav") and path not in wanted:
+                os.remove(path)
+    log("pregenerate done" + (f" with {problems} problem(s)" if problems else ""))
+    return 1 if problems else 0
 
 
 # ------------------------------------------------------------------ main
@@ -486,6 +598,8 @@ def _watchdog(signum, frame):
 
 
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "--pregenerate":
+        return pregenerate(load_env(), [c.lower() for c in sys.argv[2:]])
     if len(sys.argv) < 3:
         log("usage: transcribe_audio.py <input.wav> <output_path_without_ext> [client]")
         return 2
@@ -502,7 +616,7 @@ def main():
     log("QUESTION:", repr(question))
 
     if not question:
-        reply = "Sorry, I didn't catch your question. Please try again."
+        reply = NOT_CAUGHT
     else:
         try:
             source = report_source(cfg, client)
@@ -511,7 +625,7 @@ def main():
             reply = answer(question, companies, today)
         except (OSError, ValueError) as e:
             log(f"report error: {type(e).__name__}: {e}")
-            reply = "Sorry, I can't read today's filing report right now."
+            reply = REPORT_ERROR
 
     reply = numbers_to_words(reply)
     log("ANSWER:", reply)
