@@ -89,3 +89,21 @@ test('fonts load from our own origin', async ({ page }) => {
   await expect.poll(() => fonts.length).toBeGreaterThan(0)
   expect(fonts.every((url) => url.startsWith('http://127.0.0.1'))).toBe(true)
 })
+
+test('the dither backdrop draws in the corner and stays out of assistive tech', async ({
+  page,
+}) => {
+  await page.goto('/')
+  const backdrop = page.locator('[data-dither-backdrop]')
+  await expect(backdrop).toHaveAttribute('aria-hidden', 'true')
+  const inked = await backdrop.evaluate((canvas: HTMLCanvasElement) => {
+    const context = canvas.getContext('2d')
+    if (!context) return null
+    const alphaAt = (x: number, y: number) => context.getImageData(x, y, 1, 1).data[3]
+    return {
+      corner: alphaAt(canvas.width - 1, canvas.height - 1),
+      origin: alphaAt(0, 0),
+    }
+  })
+  expect(inked).toEqual({ corner: 255, origin: 0 })
+})

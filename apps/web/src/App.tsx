@@ -1,5 +1,6 @@
 import { LazyMotion, MotionConfig } from 'motion/react'
 import { createBrowserRouter, RouterProvider } from 'react-router'
+import { DitherBackdrop } from '#src/components/DitherBackdrop.tsx'
 import { SessionProvider } from '#src/features/auth/SessionProvider.tsx'
 import { LandingPage } from '#src/routes/LandingPage.tsx'
 import { LoginPage } from '#src/routes/LoginPage.tsx'
@@ -38,6 +39,7 @@ export function App() {
     <MotionConfig reducedMotion="user">
       <LazyMotion features={loadMotionFeatures} strict>
         <SessionProvider>
+          <DitherBackdrop />
           <RouterProvider router={router} />
         </SessionProvider>
       </LazyMotion>

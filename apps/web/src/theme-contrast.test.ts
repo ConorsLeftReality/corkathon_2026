@@ -39,6 +39,10 @@ const TEXT_PAIRS: [string, string][] = [
   ['warning-deep', 'rim'],
   ['warning-deep', 'warning-tint'],
   ['success-deep', 'rim'],
+  // text can land on a dither dot, so it has to read there too
+  ['ink', 'dither'],
+  ['graphite', 'dither'],
+  ['signal', 'dither'],
 ]
 
 describe('theme contrast', () => {

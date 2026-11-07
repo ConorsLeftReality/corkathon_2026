@@ -31,6 +31,7 @@
   --color-shell: #e8eee9;
   --color-rim: #ffffff;
   --color-rule: #b5c9bc;
+  --color-dither: #c3cde3;
   --color-signal: #1f3d8f;
   --color-signal-deep: #182f6e;
   --color-signal-tint: #e4e9f5;
@@ -128,22 +129,6 @@
     min-height: 100dvh;
     font-size: var(--text-body);
     line-height: var(--text-body--line-height);
-  }
-
-  /* the faint rulings of a columnar pad, text itself always sits on solid sheets */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background:
-      repeating-linear-gradient(
-        to bottom,
-        transparent 0 31px,
-        color-mix(in srgb, var(--color-rule) 45%, transparent) 31px 32px
-      ),
-      var(--color-shell);
   }
 
   a {
