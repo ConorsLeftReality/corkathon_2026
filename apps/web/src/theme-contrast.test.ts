@@ -38,6 +38,7 @@ const TEXT_PAIRS: [string, string][] = [
   ['danger-deep', 'danger-tint'],
   ['warning-deep', 'rim'],
   ['warning-deep', 'warning-tint'],
+  ['success-deep', 'rim'],
 ]
 
 describe('theme contrast', () => {

@@ -3,7 +3,7 @@ import { apiRequest } from '#src/api/api-client.ts'
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
 
-const snapshotSchema = z.object({
+export const snapshotSchema = z.object({
   fetched_at: z.string(),
   newest_reg_date: isoDate,
   stale: z.boolean(),
@@ -66,4 +66,21 @@ export type RadarRequest =
 
 export function askRadar(request: RadarRequest): Promise<AskResponse> {
   return apiRequest('/api/radar/ask', askResponseSchema, { method: 'POST', body: request })
+}
+
+export const clientListSchema = z.object({ company_numbers: z.array(z.string()) })
+
+export function fetchSnapshot(): Promise<RadarSnapshot> {
+  return apiRequest('/api/radar/snapshot', snapshotSchema)
+}
+
+export async function fetchClientList(): Promise<string[]> {
+  const { company_numbers } = await apiRequest('/api/radar/clients', clientListSchema)
+  return company_numbers
+}
+
+export async function saveClientList(numbers: string[]): Promise<string[]> {
+  const options = { method: 'PUT', body: { company_numbers: numbers } } as const
+  const { company_numbers } = await apiRequest('/api/radar/clients', clientListSchema, options)
+  return company_numbers
 }

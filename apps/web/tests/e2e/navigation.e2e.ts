@@ -26,8 +26,8 @@ test('the navigation moves between screens without a page load', async ({ page }
   await expect(page.getByRole('dialog')).toHaveCount(0)
 
   await openMenuOnPhones(page)
-  await page.getByRole('navigation').getByRole('link', { name: 'Overview' }).click()
-  await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+  await page.getByRole('navigation').getByRole('link', { name: 'Today' }).click()
+  await expect(page.getByRole('heading', { name: 'Today', exact: true })).toBeVisible()
   expect(documentLoads).toBe(0)
 })
 

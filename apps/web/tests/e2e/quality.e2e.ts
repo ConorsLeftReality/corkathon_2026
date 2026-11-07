@@ -63,9 +63,9 @@ test('the landing page passes axe and fits the viewport', async ({ page }) => {
   await expectNoSidewaysScroll(page)
 })
 
-test('the overview screen passes axe and fits the viewport', async ({ page }) => {
+test('the today screen passes axe and fits the viewport', async ({ page }) => {
   await signUp(page)
-  await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Today', exact: true })).toBeVisible()
   await expectNoAxeViolations(page)
   await expectNoSidewaysScroll(page)
 })

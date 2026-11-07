@@ -49,12 +49,18 @@ function LedgerRow({ row }: { row: RadarRow }) {
   )
 }
 
-export function Ledger({ rows, total }: { rows: RadarRow[]; total: number }) {
+type LedgerProps = { rows: RadarRow[]; total: number; caption?: string }
+
+export function Ledger({
+  rows,
+  total,
+  caption = 'Companies that match, most urgent first',
+}: LedgerProps) {
   if (rows.length === 0) return null
   return (
     <div className="inset px-4 pt-1 pb-4">
       <table className="w-full border-collapse">
-        <caption className="sr-only">Companies that match, most urgent first</caption>
+        <caption className="sr-only">{caption}</caption>
         <thead>
           <tr className="border-b border-ink text-left text-micro text-graphite">
             <th scope="col" className="py-2 pr-3 font-medium">
@@ -72,7 +78,10 @@ export function Ledger({ rows, total }: { rows: RadarRow[]; total: number }) {
             <th scope="col" className="hidden py-2 pr-3 font-medium md:table-cell">
               Deadline
             </th>
-            <th scope="col" className="hidden py-2 text-right font-medium md:table-cell">
+            <th
+              scope="col"
+              className="hidden py-2 text-right font-medium whitespace-nowrap md:table-cell"
+            >
               Est. penalty
             </th>
           </tr>

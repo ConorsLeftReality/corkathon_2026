@@ -1,11 +1,11 @@
-import { IconLayoutDashboard, IconNotes, IconRadar2 } from '@tabler/icons-react'
+import { IconCalendarDue, IconNotes, IconRadar2 } from '@tabler/icons-react'
 import { Outlet } from 'react-router'
 import { DesktopSidebar, MobileSidebar, Sidebar, SidebarLink } from '#src/components/ui/sidebar'
 import type { SidebarItem } from '#src/components/ui/sidebar'
 import { useSession } from '#src/features/auth/SessionProvider.tsx'
 
 const NAV_ITEMS: readonly SidebarItem[] = [
-  { to: '/app', label: 'Overview', icon: <IconLayoutDashboard size={18} aria-hidden />, end: true },
+  { to: '/app', label: 'Today', icon: <IconCalendarDue size={18} aria-hidden />, end: true },
   { to: '/app/radar', label: 'Filing deadlines', icon: <IconRadar2 size={18} aria-hidden /> },
   { to: '/app/notes', label: 'Notes', icon: <IconNotes size={18} aria-hidden /> },
 ]

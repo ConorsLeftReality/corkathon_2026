@@ -1,5 +1,38 @@
 import { describe, expect, it } from 'bun:test'
-import { askResponseSchema } from '#src/features/radar/radar-api.ts'
+import {
+  askResponseSchema,
+  clientListSchema,
+  snapshotSchema,
+} from '#src/features/radar/radar-api.ts'
+
+describe('snapshotSchema', () => {
+  it('reads the freshness gate result', () => {
+    const parsed = snapshotSchema.parse({
+      fetched_at: '2026-11-07T09:12:00Z',
+      newest_reg_date: '2025-11-12',
+      stale: true,
+    })
+    expect(parsed.stale).toBe(true)
+  })
+
+  it('rejects a snapshot with no stale flag', () => {
+    expect(
+      snapshotSchema.safeParse({ fetched_at: '', newest_reg_date: '2026-11-06' }).success,
+    ).toBe(false)
+  })
+})
+
+describe('clientListSchema', () => {
+  it('reads the saved company numbers', () => {
+    expect(clientListSchema.parse({ company_numbers: ['123456'] }).company_numbers).toEqual([
+      '123456',
+    ])
+  })
+
+  it('rejects numbers sent as numbers, which would drop leading zeros', () => {
+    expect(clientListSchema.safeParse({ company_numbers: [123456] }).success).toBe(false)
+  })
+})
 
 const snapshot = { fetched_at: '2026-11-07T09:12:00Z', newest_reg_date: '2026-11-06', stale: false }
 

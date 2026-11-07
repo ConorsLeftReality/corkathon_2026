@@ -4,8 +4,8 @@ import { assertNever } from '#src/assert-never.ts'
 import { cn } from '#src/lib/cn'
 import { Ledger } from '#src/features/radar/Ledger.tsx'
 import { PRESETS, QUESTION_MAX_LENGTH } from '#src/features/radar/radar-api.ts'
-import type { RadarMode, RadarSnapshot } from '#src/features/radar/radar-api.ts'
-import { formatDate } from '#src/features/radar/radar-format.ts'
+import type { RadarMode } from '#src/features/radar/radar-api.ts'
+import { SnapshotLine } from '#src/features/radar/SnapshotLine.tsx'
 import { useRadar } from '#src/features/radar/use-radar.ts'
 import type { RadarState } from '#src/features/radar/use-radar.ts'
 import { WorkingPaper } from '#src/features/radar/WorkingPaper.tsx'
@@ -77,18 +77,6 @@ function PresetList({
   )
 }
 
-function SnapshotLine({ snapshot }: { snapshot: RadarSnapshot }) {
-  const date = formatDate(snapshot.newest_reg_date)
-  if (snapshot.stale) {
-    return (
-      <p role="note" className="rounded-md bg-warning-tint px-4 py-3 text-label text-warning-deep">
-        This data is from {date} and may be out of date. Deadlines can have moved since then.
-      </p>
-    )
-  }
-  return <p className="text-label text-graphite">From the CRO register, up to date as of {date}.</p>
-}
-
 type ResultProps = {
   state: RadarState
   presets: readonly Preset[]
@@ -149,8 +137,10 @@ function RadarResult({ state, presets, onPick }: ResultProps) {
   }
 }
 
-export function RadarPanel({ onSessionLost }: { onSessionLost: () => void }) {
-  const [mode, setMode] = useState<RadarMode>('prospects')
+type RadarPanelProps = { initialMode: RadarMode; onSessionLost: () => void }
+
+export function RadarPanel({ initialMode, onSessionLost }: RadarPanelProps) {
+  const [mode, setMode] = useState<RadarMode>(initialMode)
   const [question, setQuestion] = useState('')
   const { state, ask, reset } = useRadar(mode, onSessionLost)
   const questionId = useId()
