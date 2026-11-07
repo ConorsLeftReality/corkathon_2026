@@ -28,7 +28,7 @@ Top 10 teams pitch live in Boole 2 from 19:35: **3 minutes, then 2 minutes of Q&
 | Time | Beat | On screen or phone | Say (roughly) |
 |---|---|---|---|
 | 0:00 to 0:20 | **Pain** | Landing page | "It's November. Which of your clients have to file with the CRO before Christmas? If you're an accountant, the answer is in a spreadsheet, practice software and someone's head. Miss one and your client pays a late penalty." |
-| 0:20 to 0:45 | **Today** | Driver clicks Open the app, Today screen shows overdue clients and clients due this week | "This is Dialed In. Every morning it checks your client list against the CRO's own register and tells you who to chase. Two are overdue, three are due this week." |
+| 0:20 to 0:45 | **Today** | Driver signs in, Today screen shows overdue clients and clients due this week | "This is Dialed In. Every morning it checks your client list against the CRO's own register and tells you who to chase. Two are overdue, three are due this week." |
 | 0:45 to 1:15 | **Prospects** | Filing deadlines page, Find prospects, click "Which Cork hospitality companies are overdue on their annual return?" | "Now flip it round. These Cork cafes, hotels and pubs have already missed their annual return. Each one is a business without a working filing process, which makes it a lead for a practice. Same data, free and public." |
 | 1:15 to 1:35 | **Show the working** | Driver opens "How this was worked out" | "How do you know it isn't making this up? Here's the filter, the query that ran, the row count and the date of the data. For this question no AI is involved at all. When you type a question, the AI's only job is to pick this filter. It never calculates a date, a penalty or a count." |
 | 1:35 to 2:00 | **Desk phone** | Phone asks the question out loud, presses the button, speaker to the mic | "Busy people don't open dashboards. This is our phone prototype: you ask, and it reads you the answer. The answer you're hearing was generated ahead of time from the same register data. Live speech in and live data out is our next step." (let it play) |
@@ -48,7 +48,7 @@ Fill in before going on stage:
 
 ## Stage setup
 
-- Laptop on HDMI to the projector, browser zoom 125 percent, Today screen open. A second tab on the Filing deadlines page in Find prospects mode.
+- Laptop on HDMI to the projector, browser zoom 125 percent, signed in, Today screen open. A second tab on the Filing deadlines page in Find prospects mode.
 - Desk phone on the lectern table with its power. The mobile charged, volume at maximum, notifications off, the recording ready to play.
 - Phone audio: put each phone on speaker and hold its speaker about 5 cm from the lectern mic. Test this in the room if allowed. If the venue mic is a lapel, hold the phone to it.
 

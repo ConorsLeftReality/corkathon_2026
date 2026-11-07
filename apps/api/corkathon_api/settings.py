@@ -1,3 +1,4 @@
+from datetime import date
 from pathlib import Path
 from typing import Literal
 
@@ -21,3 +22,8 @@ class Settings(BaseSettings):
     host: str = "127.0.0.1"
     port: int = Field(default=5001, ge=1, le=65535)
     web_dist: Path = REPO_ROOT / "apps" / "web" / "dist"
+    # cro snapshot, my_companies.csv and the cached report, /data/filings in the container
+    filings_data_dir: Path = REPO_ROOT / "apps" / "api" / "instance" / "filings"
+    filings_window_days: int = Field(default=30, ge=1, le=365)
+    # a fixed date for a reproducible demo, today when unset
+    filings_as_of: date | None = None

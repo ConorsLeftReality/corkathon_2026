@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 import type { Page, Route } from '@playwright/test'
-import { openApp } from './session-steps.ts'
+import { PASSWORD, signUp, uniqueEmail } from './session-steps.ts'
 
 // stubs matteo/app.py, the filings api, in the shape its report.json takes
 
@@ -47,11 +47,25 @@ type Stub = { refreshes: number }
 
 async function stubFilings(
   page: Page,
-  options: { reportBody?: unknown; reportStatus?: number; hold?: Promise<unknown> } = {},
+  options: {
+    reportBody?: unknown
+    reportStatus?: number
+    hold?: Promise<unknown>
+    // the first n report requests fail, later ones succeed
+    reportFailures?: number
+    refreshFails?: boolean
+  } = {},
 ): Promise<Stub> {
   const stub: Stub = { refreshes: 0 }
+  let reportCalls = 0
+  // one handler per route for the whole test, swapping handlers mid test hung on ci
   await page.route('**/api/report', async (route) => {
+    reportCalls += 1
     if (options.hold) await options.hold
+    if (reportCalls <= (options.reportFailures ?? 0)) {
+      await json(route, { error: 'Company list not found: my_companies.csv' }, 500)
+      return
+    }
     await json(route, options.reportBody ?? report, options.reportStatus ?? 200)
   })
   await page.route('**/api/briefing', (route) =>
@@ -59,13 +73,17 @@ async function stubFilings(
   )
   await page.route('**/api/refresh', async (route) => {
     stub.refreshes += 1
+    if (options.refreshFails) {
+      await json(route, { error: 'Company list not found: my_companies.csv' }, 500)
+      return
+    }
     await json(route, report)
   })
   return stub
 }
 
 async function openToday(page: Page) {
-  await openApp(page)
+  await signUp(page)
   await expect(page.getByRole('heading', { name: 'Today', exact: true })).toBeVisible()
 }
 
@@ -113,12 +131,8 @@ test('rebuild asks the filings api for a fresh report', async ({ page }) => {
 })
 
 test('a failed rebuild says why and keeps the old report', async ({ page }) => {
-  await stubFilings(page)
+  await stubFilings(page, { refreshFails: true })
   await openToday(page)
-  await page.unroute('**/api/refresh')
-  await page.route('**/api/refresh', (route) =>
-    json(route, { error: 'Company list not found: my_companies.csv' }, 500),
-  )
   await page.getByRole('button', { name: 'Rebuild report' }).click()
   await expect(page.getByRole('alert')).toHaveText(
     'Could not rebuild the report. Company list not found: my_companies.csv',
@@ -136,15 +150,10 @@ test('shows a loading state while the report is built', async ({ page }) => {
 })
 
 test('an error from the filings api is shown and can be retried', async ({ page }) => {
-  await stubFilings(page, {
-    reportBody: { error: 'Company list not found: my_companies.csv' },
-    reportStatus: 500,
-  })
+  await stubFilings(page, { reportFailures: 1 })
   await openToday(page)
   await expect(page.getByRole('alert')).toHaveText('Company list not found: my_companies.csv')
 
-  await page.unroute('**/api/report')
-  await page.route('**/api/report', (route) => json(route, report))
   await page.getByRole('button', { name: 'Load the report again' }).click()
   await expect(page.getByRole('table', { name: 'Your clients: overdue' })).toBeVisible()
 })
@@ -206,4 +215,50 @@ test('the today screen passes axe and fits the viewport', async ({ page }) => {
     path: `test-results/today-${page.viewportSize()?.width}.png`,
     fullPage: true,
   })
+})
+
+test('a lost session on today returns to sign in', async ({ page }) => {
+  await stubFilings(page)
+  await page.unroute('**/api/report')
+  await page.route('**/api/report', (route) =>
+    json(route, { error: { code: 'unauthorized', message: 'Sign in again.' } }, 401),
+  )
+  await page.goto('/login')
+  await page.getByRole('button', { name: 'I need an account' }).click()
+  await page.getByLabel('Email').fill(uniqueEmail())
+  await page.getByLabel('Password').fill(PASSWORD)
+  await page.getByRole('button', { name: 'Create account' }).click()
+  // today loads, gets the 401, and hands back to sign in
+  await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible()
+})
+
+test('says the report is being built while the cro file downloads', async ({ page }) => {
+  await stubFilings(page, {
+    reportBody: {
+      error: {
+        code: 'filings_building',
+        message: "Downloading today's CRO register. Try again in a minute.",
+      },
+    },
+    reportStatus: 503,
+  })
+  await openToday(page)
+  await expect(page.getByRole('alert')).toHaveText(
+    "Downloading today's CRO register. Try again in a minute.",
+  )
+  await expect(page.getByRole('button', { name: 'Load the report again' })).toBeVisible()
+})
+
+// no stubs: the built app, the real flask filings routes and the fixture snapshot from playwright.config.ts
+test('today reads the real filings api behind sign in', async ({ page }) => {
+  await openToday(page)
+  const overdue = page.getByRole('table', { name: 'Your clients: overdue' })
+  await expect(overdue.getByRole('rowheader', { name: /E2E OVERDUE LIMITED/ })).toBeVisible()
+  const due = page.getByRole('table', { name: 'Your clients: due in the next 30 days' })
+  await expect(due.getByRole('rowheader', { name: /E2E DUE LIMITED/ })).toBeVisible()
+  await expect(page.getByText('Filing briefing for 7 November 2026.')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Rebuild report' }).click()
+  await expect(page.getByRole('alert')).toHaveCount(0)
+  await expect(overdue.getByRole('rowheader', { name: /E2E OVERDUE LIMITED/ })).toBeVisible()
 })

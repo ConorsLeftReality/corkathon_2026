@@ -23,3 +23,10 @@ jobs:
         if: github.event_name == 'pull_request'
         run: bun scripts/lint-commit-msg.ts --range origin/${{ github.base_ref }}..HEAD
       - run: bun run check
+      - name: keep playwright results when a test fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: test-results
+          retention-days: 3

@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 from time import monotonic
 
 from flask import Flask, Response, request
@@ -7,6 +7,8 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from corkathon_api.database import db
 from corkathon_api.features.auth.routes import auth_routes
 from corkathon_api.features.auth.session import configure_sessions
+from corkathon_api.features.filings.routes import filings_routes
+from corkathon_api.features.filings.service import FilingsService
 from corkathon_api.features.health import health_routes
 from corkathon_api.features.notes.routes import notes_routes
 from corkathon_api.http_errors import register_error_handlers
@@ -63,6 +65,12 @@ def create_app(settings: Settings | None = None) -> Flask:
     app.register_blueprint(health_routes)
     app.register_blueprint(auth_routes)
     app.register_blueprint(notes_routes)
+    app.extensions["filings"] = FilingsService(
+        resolved.filings_data_dir,
+        resolved.filings_window_days,
+        today=lambda: resolved.filings_as_of or date.today(),
+    )
+    app.register_blueprint(filings_routes)
     register_web_app(app, resolved.web_dist)
 
     @app.after_request
