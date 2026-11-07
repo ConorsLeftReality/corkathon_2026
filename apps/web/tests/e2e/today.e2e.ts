@@ -47,11 +47,25 @@ type Stub = { refreshes: number }
 
 async function stubFilings(
   page: Page,
-  options: { reportBody?: unknown; reportStatus?: number; hold?: Promise<unknown> } = {},
+  options: {
+    reportBody?: unknown
+    reportStatus?: number
+    hold?: Promise<unknown>
+    // the first n report requests fail, later ones succeed
+    reportFailures?: number
+    refreshFails?: boolean
+  } = {},
 ): Promise<Stub> {
   const stub: Stub = { refreshes: 0 }
+  let reportCalls = 0
+  // one handler per route for the whole test, swapping handlers mid test hung on ci
   await page.route('**/api/report', async (route) => {
+    reportCalls += 1
     if (options.hold) await options.hold
+    if (reportCalls <= (options.reportFailures ?? 0)) {
+      await json(route, { error: 'Company list not found: my_companies.csv' }, 500)
+      return
+    }
     await json(route, options.reportBody ?? report, options.reportStatus ?? 200)
   })
   await page.route('**/api/briefing', (route) =>
@@ -59,6 +73,10 @@ async function stubFilings(
   )
   await page.route('**/api/refresh', async (route) => {
     stub.refreshes += 1
+    if (options.refreshFails) {
+      await json(route, { error: 'Company list not found: my_companies.csv' }, 500)
+      return
+    }
     await json(route, report)
   })
   return stub
@@ -113,12 +131,8 @@ test('rebuild asks the filings api for a fresh report', async ({ page }) => {
 })
 
 test('a failed rebuild says why and keeps the old report', async ({ page }) => {
-  await stubFilings(page)
+  await stubFilings(page, { refreshFails: true })
   await openToday(page)
-  await page.unroute('**/api/refresh')
-  await page.route('**/api/refresh', (route) =>
-    json(route, { error: 'Company list not found: my_companies.csv' }, 500),
-  )
   await page.getByRole('button', { name: 'Rebuild report' }).click()
   await expect(page.getByRole('alert')).toHaveText(
     'Could not rebuild the report. Company list not found: my_companies.csv',
@@ -136,15 +150,10 @@ test('shows a loading state while the report is built', async ({ page }) => {
 })
 
 test('an error from the filings api is shown and can be retried', async ({ page }) => {
-  await stubFilings(page, {
-    reportBody: { error: 'Company list not found: my_companies.csv' },
-    reportStatus: 500,
-  })
+  await stubFilings(page, { reportFailures: 1 })
   await openToday(page)
   await expect(page.getByRole('alert')).toHaveText('Company list not found: my_companies.csv')
 
-  await page.unroute('**/api/report')
-  await page.route('**/api/report', (route) => json(route, report))
   await page.getByRole('button', { name: 'Load the report again' }).click()
   await expect(page.getByRole('table', { name: 'Your clients: overdue' })).toBeVisible()
 })
