@@ -199,7 +199,7 @@ sequenceDiagram
   participant G as FastAGI
   participant D as DuckDB
 
-  Cron->>Sh: run (weekdays 08:30, or live on stage)
+  Cron->>Sh: run (weekdays 08:30, or on demand)
   Sh->>Sh: write call file to a temp path
   Sh->>Sp: mv into the spool (atomic)
   Sp->>A: Asterisk picks it up
@@ -211,4 +211,4 @@ sequenceDiagram
   A-->>P: plays briefing, hangs up
 ```
 
-The live trigger on stage is dialling `199` on the desk phone: Asterisk runs `place_briefing.sh 10`, the presenter hangs up, and the phone rings 10 seconds later. See [05-telephony.md](05-telephony.md#morning-briefing).
+To trigger it on demand, dial `199` on the desk phone: Asterisk runs `place_briefing.sh 10`, you hang up, and the phone rings 10 seconds later. See [05-telephony.md](05-telephony.md#morning-briefing).

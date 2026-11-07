@@ -1,110 +1,84 @@
 # Dialed In
 
-Dialed In tells an accountant, on a web page or their phone, which companies are about to miss or have already missed a CRO filing deadline, using the free daily company register, and shows exactly how it got the answer.
+Dialed In tells an accountant, on a web page or their phone, which companies are about to miss or have already missed a CRO filing deadline, using the free daily Companies Registration Office register, and shows how it got each answer.
 
-Built at Corkathon, Cork, 7 November 2026, for the Frame sponsor track and IGNITE Best Startup Potential.
+## What is in the repo
 
-> **Status.** Every Dialed In feature below is **Planned** unless marked **Built**. What is Built today is the React and Flask scaffold (sign-in, database, CI, one-container deploy), described in [docs/scaffold.md](docs/scaffold.md). Each doc labels every feature, and gets updated as pieces land.
+| Path | What it is | Deployed as |
+|---|---|---|
+| `apps/web` | React and Vite front end: sign-in, the Today page (`/app`) and the Filing deadlines page (`/app/radar`) | Built into the main container |
+| `apps/api` | Flask API: sign-in, the filings report, stored radar questions, notes | The main container (`Dockerfile`) |
+| `apps/cro-tracker` | Standalone multi-client report API and daily job, read by the phone | Its own container, see [DEPLOY.md](apps/cro-tracker/DEPLOY.md) |
+| `apps/phone` | Asterisk scripts: answer spoken questions and ring a morning review | Installed on the Pi, see [README](apps/phone/README.md) |
 
-## What it does
+## What works today
 
 | Feature | Status |
 |---|---|
-| **Prospects mode**: "Which Cork hospitality companies are overdue on their annual return?" returns a ranked list of new-business leads | Planned |
-| **Clients mode**: upload your client company numbers, ask "Who do I need to chase this week?" | Web UI built (client list on `/app`, questions on `/app/radar`), API Planned |
-| **Honesty panel**: every web answer shows the filter that was run, the SQL, the row count and the data snapshot date | Web UI built at `/app/radar`, API Planned |
-| **Phone**: hear answers read aloud on a desk phone or a personal work mobile | Demo prototype: plays a pre-recorded answer made from hardcoded data. Live voice (dial 100, ask out loud) Planned |
-| **Morning briefing**: the phone rings and reads the day's key deadlines | Planned. The same briefing on screen is the Today page at `/app` (web UI built, API Planned) |
-| **Company brief**: click a company for status, filing history and sector | Planned (stretch) |
-
-## How it works in 60 seconds
-
-1. Planned: a script will download the CRO "Company Records" open dataset (CC BY 4.0) and load it into a local DuckDB file. A freshness check will flag the snapshot as stale if its newest registration is more than about 7 days old.
-2. Rules in code add derived fields: days to the next annual return date, overdue flag, days overdue, estimated late penalty, Eircode routing key and NACE sector label.
-3. A question in plain English goes to Claude, which may only answer with a JSON filter that must pass a fixed schema. **The model never computes dates, money or counts.**
-4. Code turns the filter into parameterised SQL, runs it on DuckDB, and writes the answer sentence from the result rows, always with the row count and snapshot date.
-5. The same engine answers the web page (React on Flask) and the desk phone (a Cisco IP phone wired to a Raspberry Pi running Asterisk, with speech to text going in and Piper text to speech coming out).
-
-The DuckDB data pipeline and radar question engine are planned, not implemented in the current repository. The built application is the React and Flask scaffold with Flask-SQLAlchemy, sign-in, client-list UI, and radar UI backed by development mock responses.
-
-```mermaid
-flowchart LR
-  CRO[CRO open data] --> Load[fetch + load] --> DB[(DuckDB)]
-  Web[Web page] --> API[Flask /api/radar]
-  Phone[Desk phone ext 100] --> PBX[Asterisk on Pi] --> AGI[FastAGI service]
-  API --> Engine
-  AGI --> Engine
-  Engine[question engine] -->|question only| LLM[Claude: text to filter]
-  Engine --> DB
-```
-
-Full detail: [docs/02-architecture.md](docs/02-architecture.md).
+| Sign-in with HttpOnly cookie sessions, CSRF and rate limits | Built |
+| **Today page**: overdue and due-soon companies from the daily CRO snapshot for a shared client list | Built |
+| **Filing deadlines page**: stored questions (overdue clients, due this week, prospects by area and sector), each showing the filter, row count and snapshot date | Built |
+| **Phone**: ask a question on a desk phone, hear an answer pre-rendered with Piper from the cro-tracker report | Built (`apps/phone`) |
+| **Morning review call**: the phone rings and reads the day's overdue and due companies | Built (`apps/phone/morning_review.py`) |
+| Free-text questions answered by Claude turned into a checked filter | Planned. The API returns `503 radar_llm_unavailable` and the page offers the stored questions |
+| Per-user client lists (`/api/radar/clients`) | Planned. Today the client list is one shared file, protected by `FILINGS_ALLOWED_EMAILS` |
 
 ## Quickstart
 
-You need [Bun](https://bun.sh) and [uv](https://docs.astral.sh/uv/getting-started/installation).
-
-Set up the scaffold (**Built**):
+You need [Bun](https://bun.sh), [uv](https://docs.astral.sh/uv/getting-started/installation) and Node.js 20 or newer (for Playwright).
 
 ```bash
 bun install
-bun run setup
+bun run setup   # writes .env with a new secret, installs Python packages and the Playwright browser
+bun run dev     # Vite on :5173, Flask on :5001
 ```
 
-Add your Claude API key to `.env` (**Planned**, nothing reads it yet):
+Open http://localhost:5173 and create an account. The first request of the day downloads the CRO snapshot (about 47 MB), so the Today page shows "building" for a minute.
 
-```bash
-echo "ANTHROPIC_API_KEY=sk-ant-..." >> .env
-```
+`bun run dev:mock` answers `/api/radar/*` with placeholder data from `apps/web/dev/radar-mock.ts`, for front-end work without the CRO file.
 
-Fetch and load the data (**Planned; these commands are not implemented yet**):
+## Checks
 
-```bash
-bun run radar:fetch
-bun run radar:check
-```
+`bun run check` runs typecheck, lint, format check, unit tests (Bun and pytest), Playwright e2e and the production build. CI runs the same on every push and pull request.
 
-Run the backend and web page (**Built**; the current scaffold does not use DuckDB or show live radar data):
+## Deploy
 
-```bash
-bun run dev
-```
+One container serves the API and the built front end. Set at least:
 
-Open http://localhost:5173 and sign in. The current Today and Radar screens use the scaffold routes and development data; the live CRO snapshot and radar API are not implemented yet.
+| Variable | Value |
+|---|---|
+| `JWT_SECRET_KEY` | Output of `openssl rand -hex 32` |
+| `TRUSTED_PROXIES` | `1` behind one reverse proxy, so rate limits see the real client address |
+| `FILINGS_ALLOWED_EMAILS` | Comma-separated accounts allowed to read the client report. **Set this before loading a real client list**, since sign-up is open |
 
-Until the radar API exists, run the web app against a mock instead (**Built**, dev only):
+Serve it over HTTPS: session cookies are `Secure` in production. Data lives on the `/data` volume. Full detail in [docs/scaffold.md](docs/scaffold.md#deploy) and [docs/api-contract.md](docs/api-contract.md).
 
-```bash
-bun run dev:mock
-```
-
-This is `bun run dev` with `/api/radar/*` answered by `apps/web/dev/radar-mock.ts`: placeholder companies only, one shared client list, no AI. Sign-in still goes to the real Flask app. The mock is never part of a production build, and its unit tests check every response against the zod schemas in `apps/web/src/features/radar/radar-api.ts`, which is the contract the real API must meet.
-
-Call extension 100 (**Planned**): set up the Pi as described in [docs/06-runbook.md](docs/06-runbook.md), then pick up the desk phone and dial `100`.
+Pushes to `main` deploy to Dokku through `.github/workflows/deploy.yml`, which needs the repository secrets `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_SECRET`, `PI_TAILSCALE_IP` and `DOKKU_SSH_KEY`.
 
 ## Docs
 
 | Doc | What is in it |
 |---|---|
-| [01-overview](docs/01-overview.md) | Problem, users, the two modes, how we meet each judging criterion |
-| [02-architecture](docs/02-architecture.md) | Components and the flows for web, phone and morning briefing |
-| [03-data](docs/03-data.md) | Dataset, fields, licence, freshness gate, derived field formulas |
-| [04-question-engine](docs/04-question-engine.md) | Filter schema, prompt, guardrails, SQL templates, test questions |
-| [05-telephony](docs/05-telephony.md) | Phone network, Asterisk config, dialplan, AGI contract, audio |
-| [06-runbook](docs/06-runbook.md) | Setup from zero, env vars, troubleshooting, pre-demo checklist |
-| [07-demo-and-pitch](docs/07-demo-and-pitch.md) | 3-minute script, stage setup, backups |
-| [08-limits-and-roadmap](docs/08-limits-and-roadmap.md) | What it cannot do, what comes next |
-| [09-judge-qa](docs/09-judge-qa.md) | Likely judge questions and answers |
-| [10-devpost](docs/10-devpost.md) | Ready-to-paste Devpost sections |
+| [api-contract](docs/api-contract.md) | Filings and radar API routes and schemas |
+| [scaffold](docs/scaffold.md) | Project layout, commands and deploy |
 | [decisions](docs/decisions.md) | Short decision records |
-| [scaffold](docs/scaffold.md) | The underlying React and Flask scaffold, commands, deploy |
+| [01-overview](docs/01-overview.md) | Problem, users and the two modes |
+| [08-limits-and-roadmap](docs/08-limits-and-roadmap.md) | What it cannot do, what comes next |
 
-## Team
+The design notes below describe the fuller planned system (DuckDB, a Claude-backed question engine, FastAGI telephony). Each section is labelled Built or Planned, and much of it is Planned:
 
-Placeholder: add the three team names and roles here.
+| Doc | What is in it |
+|---|---|
+| [02-architecture](docs/02-architecture.md) | Components and flows for web, phone and morning briefing |
+| [03-data](docs/03-data.md) | Dataset, fields, licence, freshness gate, derived fields |
+| [04-question-engine](docs/04-question-engine.md) | Filter schema, prompt, guardrails, SQL templates |
+| [05-telephony](docs/05-telephony.md) | Phone network, Asterisk config, dialplan |
+| [06-runbook](docs/06-runbook.md) | Setup from zero for the planned design |
 
 ## Data attribution
 
-Contains Companies Registration Office data, used under CC BY 4.0. See [docs/03-data.md](docs/03-data.md) for the exact attribution text.
+Contains data from the Companies Registration Office (CRO), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Source: CRO Open Data Portal, Company Records dataset.
 
-> **VERIFY:** the attribution wording the CRO asks for on its open data portal.
+## Licence
+
+[MIT](LICENSE)
