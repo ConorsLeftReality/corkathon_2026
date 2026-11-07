@@ -1,21 +1,21 @@
 import { expect, test } from '@playwright/test'
-import { PASSWORD, signUp, uniqueEmail } from './session-steps.ts'
+import { PASSWORD, signUp, uniqueEmail, signedInAs } from './session-steps.ts'
 
 test('a new user can create an account, sign out and sign back in', async ({ page }) => {
   const email = await signUp(page)
-  await page.getByRole('button', { name: 'Sign out' }).click()
+  await page.getByRole('button', { name: 'Sign out' }).filter({ visible: true }).click()
   await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible()
 
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password').fill(PASSWORD)
   await page.getByRole('button', { name: 'Sign in' }).click()
-  await expect(page.getByText(email)).toBeVisible()
+  await expect(signedInAs(page, email)).toBeVisible()
 })
 
 test('a session survives a reload', async ({ page }) => {
   const email = await signUp(page)
   await page.reload()
-  await expect(page.getByText(email)).toBeVisible()
+  await expect(signedInAs(page, email)).toBeVisible()
 })
 
 test('a wrong password shows an error and stays signed out', async ({ page }) => {
@@ -57,7 +57,7 @@ test('a signed out visitor returns to the page they asked for after signing in',
   page,
 }) => {
   const email = await signUp(page)
-  await page.getByRole('button', { name: 'Sign out' }).click()
+  await page.getByRole('button', { name: 'Sign out' }).filter({ visible: true }).click()
   await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible()
 
   await page.goto('/app/notes')
