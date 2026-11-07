@@ -35,8 +35,11 @@ jobs:
           PI_IP: ${{ secrets.PI_TAILSCALE_IP }}
         run: |
           mkdir -p ~/.ssh
-          printf '%s\n' "$SSH_KEY" | tr -d '\r' > ~/.ssh/deploy_key
+          # DOKKU_SSH_KEY holds the private key as a single base64 line
+          printf '%s' "$SSH_KEY" | tr -d '\r\n ' | base64 -d > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
+          ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null \
+            || { echo "DOKKU_SSH_KEY is not a valid key"; exit 1; }
           ssh-keyscan -H "$PI_IP" >> ~/.ssh/known_hosts
 
           git remote add dokku "dokku@$PI_IP:corkathon2026"
