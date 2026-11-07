@@ -1,10 +1,38 @@
-# Radar API contract
+# API contracts
 
-For whoever builds the Flask side of Dialed In. The web app (`/app` and `/app/radar`) is built and waiting for these four routes. Match the shapes below and the page works with no frontend changes.
+Two APIs feed the web app.
+
+## Filings API (built, `matteo/app.py`)
+
+The Today screen at `/app` reads this one. It is a separate Flask app on port 5000, on the `matteo` branch.
+
+| Route | Returns | Used by |
+|---|---|---|
+| `GET /api/report` | `{generated_at, as_of, window_days, grace_days, counts, companies, source}`, optional `?status=due,overdue` | Today screen: tiles, overdue and due tables |
+| `GET /api/companies` | the sorted `companies` list only | not used yet |
+| `GET /api/briefing` | plain text for ElevenLabs | Today screen: "What the phone reads" |
+| `POST /api/refresh` | the rebuilt report | Today screen: "Rebuild report" |
+
+The zod schema for the report is `reportSchema` in `apps/web/src/features/filings/filings-api.ts`. Each company has `company_num`, `company_name`, `company_status`, `company_type`, `address`, `last_ar_date`, `nard`, `deadline`, `days_left` (negative when overdue) and `status` (`overdue`, `due`, `ok`, `unknown`, `dissolved` or `not_found`). Errors come back as `{"error": "..."}` and the page shows the message.
+
+The client list is `my_companies.csv` on the filings server, shared by everyone. There is no sign-in on this API.
+
+To run it beside the web app:
+
+```bash
+uv run --with flask==3.1.3 python matteo/app.py serve
+bun run dev
+```
+
+Vite sends `/api/report`, `/api/companies`, `/api/briefing` and `/api/refresh` to `http://127.0.0.1:5000` (change it with `FILINGS_API_URL`) and everything else under `/api` to the scaffold Flask app on 5001. `bun run dev:mock` answers all of them with placeholder data instead.
+
+## Radar API (Planned)
+
+The Filing deadlines page at `/app/radar` (prospects search, stored questions, typed questions) needs this one, and it is not built. Until it is, that page only works under `bun run dev:mock`. The rest of this page is the contract for it.
 
 The source of truth is the zod schemas in `apps/web/src/features/radar/radar-api.ts`. This page restates them in Python.
 
-## Check your work
+### Check your work
 
 With your Flask app running (`bun run dev:api`), in a second terminal:
 
@@ -16,7 +44,7 @@ It signs up a throwaway user, calls every route, and prints `ok` or `FAIL` with 
 
 To see your data in the real page, run `bun run dev` (not `dev:mock`) and open http://localhost:5173.
 
-## Where the code goes
+### Where the code goes
 
 Follow the `notes` feature, as `AGENTS.md` says:
 
@@ -31,7 +59,7 @@ apps/api/corkathon_api/features/radar/
 
 Register the blueprint in `apps/api/corkathon_api/app.py`, next to `notes_routes`. Every route uses `@jwt_required()`, and the client list routes filter by `signed_in_user().id`.
 
-## Routes
+### Routes
 
 | Method and path | Body | Success | Errors |
 |---|---|---|---|
@@ -42,7 +70,7 @@ Register the blueprint in `apps/api/corkathon_api/app.py`, next to `notes_routes
 
 Errors use the existing `AppError(code, message, status)`, which the scaffold already turns into `{"error": {"code": ..., "message": ...}}`. The page shows `message` to the user, so write it as a sentence a person can act on.
 
-## Models
+### Models
 
 ```python
 from datetime import date
@@ -109,7 +137,7 @@ class AskBody(BaseModel):
 
 Return them with `jsonify(model.model_dump(mode="json"))`. Without `mode="json"`, Flask writes dates as `"Fri, 14 Nov 2026 00:00:00 GMT"` and the page rejects the response.
 
-## Example responses
+### Example responses
 
 `GET /api/radar/snapshot`
 
@@ -145,7 +173,7 @@ Return them with `jsonify(model.model_dump(mode="json"))`. Without `mode="json"`
 
 `apps/web/dev/radar-mock.ts` has a full set of example responses, including a refusal and a clarifying question.
 
-## The four stored questions
+### The four stored questions
 
 The page sends `preset` with one of these ids. Look the id up in your own dict (with `in`, so `__proto__`-style ids are just unknown), and return `400` with code `radar_question_invalid` for anything else. Never take a filter from the request.
 
@@ -160,7 +188,7 @@ The rules for overdue, the deadline, days overdue and the penalty are in [03-dat
 
 For a clients preset with an empty client list, return an `Answer` with no rows. The page shows its empty state before asking, so this is a fallback.
 
-## Free-text questions
+### Free-text questions
 
 These are optional. Until the Claude step from [04-question-engine.md](04-question-engine.md) exists, answer any `question` with:
 
@@ -170,6 +198,6 @@ raise AppError("radar_llm_unavailable", "Typed questions are not available yet. 
 
 The page reads that code and offers the four stored questions instead, which still work.
 
-## Being honest in "How this was worked out"
+### Being honest in "How this was worked out"
 
 The page shows `filter`, `sql` and `params` under "The filter the AI chose" and "The query that ran". Put in exactly what your code ran. If you sort with pandas instead of SQL, put the pandas expression in `sql`. Do not write SQL that never ran: judges will ask how it works, and this panel is the answer.
