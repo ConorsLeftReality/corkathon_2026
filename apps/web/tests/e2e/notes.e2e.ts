@@ -71,6 +71,8 @@ test('shows an error with a retry when notes fail to load', async ({ page }) => 
 
 test('a lost session returns to sign in', async ({ page, context }) => {
   await openNotes(page)
+  // the list load has to land first, or its own 401 sends us to sign in before we type
+  await expect(page.getByText('No notes yet. Add your first one.')).toBeVisible()
   await context.clearCookies()
   await page.getByLabel('New note').fill('too late')
   await page.getByRole('button', { name: 'Add note' }).click()
