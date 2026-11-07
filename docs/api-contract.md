@@ -26,6 +26,23 @@ bun run dev
 
 Vite sends `/api/report`, `/api/companies`, `/api/briefing` and `/api/refresh` to `http://127.0.0.1:5000` (change it with `FILINGS_API_URL`) and everything else under `/api` to the scaffold Flask app on 5001. `bun run dev:mock` answers all of them with placeholder data instead.
 
+The filings app guards itself:
+
+| Setting | Default | What it does |
+|---|---|---|
+| `HOST` | `127.0.0.1` | Where it listens. Anything else needs `FILINGS_TOKEN`, or it refuses to start |
+| `ALLOWED_HOSTS` | `127.0.0.1:<port>,localhost:<port>` | Requests naming any other host get a 403, which stops DNS rebinding. Add the address another device uses, for example `192.168.1.20:5000` |
+| `FILINGS_TOKEN` | not set | When set, every request needs an `X-Filings-Token` header with this value. Start Vite with the same `FILINGS_TOKEN` and the proxy adds it |
+| `ALLOWED_ORIGIN` | not set | Sends a CORS header for that origin only. The web app does not need it, since it goes through the proxy |
+
+To let the phone or another device fetch the briefing:
+
+```bash
+HOST=0.0.0.0 ALLOWED_HOSTS=192.168.1.20:5000 FILINGS_TOKEN=<long random value> uv run --with flask==3.1.3 python matteo/app.py serve
+```
+
+The device then sends `X-Filings-Token: <the same value>`. Generate the value with `openssl rand -hex 16` and keep it out of git.
+
 ## Radar API (Planned)
 
 The Filing deadlines page at `/app/radar` (prospects search, stored questions, typed questions) needs this one, and it is not built. Until it is, that page only works under `bun run dev:mock`. The rest of this page is the contract for it.
