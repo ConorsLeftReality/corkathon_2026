@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 import type { Page, Route } from '@playwright/test'
-import { signUp } from './session-steps.ts'
+import { openApp, signUp } from './session-steps.ts'
 
 // the radar api is not built yet, so these stub it to the contract in docs/02-architecture.md
 const ASK = '**/api/radar/ask'
@@ -275,4 +275,22 @@ test('the answer screen passes axe and fits the viewport', async ({ page }) => {
     path: `test-results/radar-${page.viewportSize()?.width}.png`,
     fullPage: true,
   })
+})
+
+// no stubs: the built app, the real flask radar route and the fixture snapshot from playwright.config.ts
+test('an example question reads the real register behind sign in', async ({ page }) => {
+  await openApp(page, '/app/radar')
+  await expect(page.getByRole('heading', { name: 'Filing deadlines' })).toBeVisible()
+  const question = 'Which Cork hospitality companies are overdue on their annual return?'
+  const table = page.getByRole('table', { name: 'Companies that match, most urgent first' })
+  // the first ask of the day prepares in the background, so ask again until it lands
+  await expect(async () => {
+    await page.getByRole('button', { name: question }).first().click()
+    await expect(table.getByRole('rowheader', { name: /E2E HARBOUR CAFE LIMITED/ })).toBeVisible({
+      timeout: 2000,
+    })
+  }).toPass({ timeout: 20_000 })
+  await page.getByText('How this was worked out').click()
+  await expect(page.getByText('No AI was used.', { exact: false })).toBeVisible()
+  await expect(page.getByText('starts 55 or 56', { exact: false })).toBeVisible()
 })
