@@ -25,7 +25,8 @@ ENV PATH=/app/.venv/bin:$PATH \
     HOST=0.0.0.0 \
     PORT=5001 \
     WEB_DIST=/app/web \
-    DATABASE_URL=sqlite:////data/corkathon.db
+    DATABASE_URL=sqlite:////data/corkathon.db \
+    FILINGS_DATA_DIR=/data/filings
 USER app
 VOLUME /data
 EXPOSE 5001
