@@ -1,5 +1,10 @@
-import { IconPhoneCall } from '@tabler/icons-react'
+import { IconFileSearch, IconListCheck, IconPhoneCall, IconTargetArrow } from '@tabler/icons-react'
 import { Link } from 'react-router'
+import { BentoGrid, BentoGridItem } from '#src/components/ui/bento-grid'
+import { GlassBorderButton } from '#src/components/ui/glass-border-button'
+import { GlowingEffect } from '#src/components/ui/glowing-effect'
+import { MagneticButton } from '#src/components/ui/magnetic-button'
+import { Spotlight } from '#src/components/ui/spotlight'
 import { Ledger } from '#src/features/radar/Ledger.tsx'
 import type { RadarRow } from '#src/features/radar/radar-api.ts'
 
@@ -36,33 +41,96 @@ const EXAMPLE_ROWS: RadarRow[] = [
   },
 ]
 
-const USES: { term: string; detail: string }[] = [
-  {
-    term: 'Find prospects',
-    detail:
-      'Ask for overdue companies by area and sector. A company that has missed its annual return needs help with its filings, and that is work for a practice.',
-  },
-  {
-    term: 'Chase clients',
-    detail:
-      'Save your client company numbers once. Each morning, see which clients are overdue and which are due in the next seven days.',
-  },
-  {
-    term: 'See the working',
-    detail:
-      'Every answer shows the filter, the query and the row count behind it. The AI only reads your question. The database does every date, count and penalty.',
-  },
-  {
-    term: 'On your phone',
-    detail:
-      'Hear the answers read aloud on a desk phone or a work mobile. In this prototype the spoken answers are recorded ahead of time from the same data.',
-  },
+const PAGE_GUTTER = 'mx-auto w-full max-w-[100rem] px-5 sm:px-8 lg:px-12'
+
+function ProspectsArt() {
+  return (
+    <div className="flex h-full flex-col justify-center gap-1.5 rounded-md bg-wash p-3">
+      {[
+        ['420', 'Placeholder Bakery Limited', 'T12, food and beverage'],
+        ['96', 'Placeholder Quay Cafe Limited', 'T12, food and beverage'],
+        ['61', 'Placeholder Lane Bistro Limited', 'T23, food and beverage'],
+      ].map(([days, name, place]) => (
+        <div key={name} className="flex items-center gap-3 rounded-sm bg-rim px-3 py-1.5">
+          <span className="figure w-14 shrink-0 text-danger-deep">{days}</span>
+          <span className="min-w-0">
+            <span className="block truncate text-label font-semibold">{name}</span>
+            <span className="block text-micro text-graphite">{place}</span>
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function ClientsArt() {
+  return (
+    <div className="grid h-full grid-cols-2 gap-2 rounded-md bg-wash p-4">
+      <div className="flex flex-col justify-end rounded-sm bg-rim p-3">
+        <span className="figure text-danger-deep">2</span>
+        <span className="text-micro text-graphite">clients overdue</span>
+      </div>
+      <div className="flex flex-col justify-end rounded-sm bg-rim p-3">
+        <span className="figure text-warning-deep">3</span>
+        <span className="text-micro text-graphite">due this week</span>
+      </div>
+    </div>
+  )
+}
+
+function WorkingArt() {
+  return (
+    <pre className="h-full overflow-hidden rounded-md bg-wash p-4 font-mono text-micro text-ink">
+      {`{
+  "mode": "prospects",
+  "overdue_only": true,
+  "nace_prefixes": ["55", "56"],
+  "area": "cork_county"
+}`}
+    </pre>
+  )
+}
+
+const WAVE = [
+  'h-3',
+  'h-6',
+  'h-10',
+  'h-5',
+  'h-12',
+  'h-8',
+  'h-4',
+  'h-9',
+  'h-14',
+  'h-6',
+  'h-10',
+  'h-3',
 ]
+
+function PhoneArt() {
+  return (
+    <div className="flex h-full items-center gap-5 rounded-md bg-wash p-4">
+      <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-signal text-rim">
+        <IconPhoneCall size={26} aria-hidden />
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <div className="flex h-14 items-center gap-1" aria-hidden>
+          {WAVE.map((height, index) => (
+            <span key={index} className={`w-1.5 rounded-full bg-signal/60 ${height}`} />
+          ))}
+        </div>
+        <p className="text-label text-ink">
+          &quot;Six Cork hospitality companies are overdue. The most overdue is Placeholder Bakery,
+          420 days late.&quot;
+        </p>
+      </div>
+    </div>
+  )
+}
 
 export function LandingPage() {
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="mx-auto flex w-full max-w-6xl items-center gap-3 px-4 py-5">
+      <header className={`${PAGE_GUTTER} flex items-center gap-3 py-5`}>
         <span className="flex items-center gap-2 font-semibold text-ink">
           <IconPhoneCall size={22} aria-hidden />
           Dialed In
@@ -72,57 +140,85 @@ export function LandingPage() {
         </Link>
       </header>
 
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-16 px-4 pt-8 pb-16 lg:pt-16">
-        <section className="grid items-start gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
-          <div className="flex flex-col gap-6">
-            <h1 className="text-h1 font-semibold text-balance sm:text-display">
-              Know which companies are about to miss a CRO filing deadline.
-            </h1>
-            <p className="max-w-xl text-graphite">
-              Dialed In reads the Companies Registration Office&apos;s free daily register and
-              answers plain questions about annual return deadlines: which of your clients to chase
-              this week, and which local companies are already overdue and could use an accountant.
-            </p>
-            <Link to="/app" className="button-primary self-start no-underline">
-              Open the app
-            </Link>
-          </div>
+      <main className="flex flex-1 flex-col gap-20 pb-16">
+        <section className="relative isolate overflow-hidden">
+          <Spotlight className="-top-40 left-0 text-edge-cool md:-top-24 md:left-40" />
+          <div
+            className={`${PAGE_GUTTER} relative grid items-center gap-12 pt-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:pt-20`}
+          >
+            <div className="flex flex-col gap-7">
+              <h1 className="max-w-[18ch] text-h1 font-semibold text-balance sm:text-display xl:text-hero">
+                Know which companies are about to miss a CRO filing deadline.
+              </h1>
+              <p className="max-w-xl text-graphite">
+                Dialed In reads the Companies Registration Office&apos;s free daily register and
+                answers plain questions about annual return deadlines: which of your clients to
+                chase this week, and which local companies are already overdue and could use an
+                accountant.
+              </p>
+              <MagneticButton className="self-start">
+                <GlassBorderButton to="/app" className="h-12 px-7">
+                  Open the app
+                </GlassBorderButton>
+              </MagneticButton>
+            </div>
 
-          <figure className="flex min-w-0 flex-col gap-3">
-            <p className="text-label font-semibold text-ink">
-              Which Cork hospitality companies are overdue?
-            </p>
-            <Ledger
-              rows={EXAMPLE_ROWS}
-              total={12}
-              caption="Example answer with placeholder companies"
-              compact
-            />
-            <figcaption className="text-micro text-graphite">
-              Example answer. The companies are placeholders, not register data.
-            </figcaption>
-          </figure>
+            <figure className="flex min-w-0 flex-col gap-3">
+              <p className="text-label font-semibold text-ink">
+                Which Cork hospitality companies are overdue?
+              </p>
+              <div className="relative rounded-md shadow-overlay">
+                <GlowingEffect spread={32} />
+                <Ledger
+                  rows={EXAMPLE_ROWS}
+                  total={12}
+                  caption="Example answer with placeholder companies"
+                  compact
+                />
+              </div>
+              <figcaption className="text-micro text-graphite">
+                Example answer. The companies are placeholders, not register data.
+              </figcaption>
+            </figure>
+          </div>
         </section>
 
-        <section aria-labelledby="uses" className="flex flex-col gap-4">
-          <h2 id="uses" className="text-h2 font-semibold">
+        <section aria-labelledby="uses" className={`${PAGE_GUTTER} flex flex-col gap-6`}>
+          <h2 id="uses" className="text-h1 font-semibold">
             What it does for a practice
           </h2>
-          <dl className="border-t border-ink">
-            {USES.map((use) => (
-              <div
-                key={use.term}
-                className="grid gap-1 border-b border-rule py-4 sm:grid-cols-[14rem_minmax(0,1fr)] sm:gap-6"
-              >
-                <dt className="font-semibold">{use.term}</dt>
-                <dd className="max-w-2xl text-graphite">{use.detail}</dd>
-              </div>
-            ))}
-          </dl>
+          <BentoGrid>
+            <BentoGridItem
+              className="md:col-span-2"
+              title="Find prospects"
+              description="Ask for overdue companies by area and sector. A company that has missed its annual return needs help with its filings, and that is work for a practice."
+              header={<ProspectsArt />}
+              icon={<IconTargetArrow size={20} aria-hidden />}
+            />
+            <BentoGridItem
+              title="Chase clients"
+              description="Save your client company numbers once. Each morning, see which clients are overdue and which are due in the next seven days."
+              header={<ClientsArt />}
+              icon={<IconListCheck size={20} aria-hidden />}
+            />
+            <BentoGridItem
+              title="See the working"
+              description="Every answer shows the filter, the query and the row count behind it. The database does every date, count and penalty."
+              header={<WorkingArt />}
+              icon={<IconFileSearch size={20} aria-hidden />}
+            />
+            <BentoGridItem
+              className="md:col-span-2"
+              title="On your phone"
+              description="Hear the answers read aloud on a desk phone or a work mobile. In this prototype the spoken answers are recorded ahead of time from the same data."
+              header={<PhoneArt />}
+              icon={<IconPhoneCall size={20} aria-hidden />}
+            />
+          </BentoGrid>
         </section>
       </main>
 
-      <footer className="mx-auto w-full max-w-6xl px-4 pb-8 text-micro text-graphite">
+      <footer className={`${PAGE_GUTTER} pb-8 text-micro text-graphite`}>
         Contains Companies Registration Office data, licensed under CC BY 4.0. Penalties are
         estimates, not legal advice.
       </footer>

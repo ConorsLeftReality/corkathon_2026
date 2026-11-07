@@ -44,7 +44,7 @@ export function TodayPanel({ onSessionLost }: { onSessionLost: () => void }) {
         <SnapshotStatus onSessionLost={onSessionLost} />
       </header>
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_24rem] xl:gap-12">
         <section aria-labelledby="clients-today" className="flex min-w-0 flex-col gap-4">
           <h2 id="clients-today" className="text-h2 font-semibold">
             Your clients today

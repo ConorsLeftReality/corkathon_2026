@@ -123,7 +123,7 @@ function RadarResult({ state, presets, onPick }: ResultProps) {
       return (
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <p className="text-h2 font-semibold wrap-break-word" aria-live="polite">
+            <p className="max-w-3xl text-h2 font-semibold wrap-break-word" aria-live="polite">
               {state.response.answer}
             </p>
             <SnapshotLine snapshot={state.response.snapshot} />
@@ -170,7 +170,7 @@ export function RadarPanel({ initialMode, onSessionLost }: RadarPanelProps) {
     <section className="flex flex-col gap-6">
       <h1 className="text-h1 font-semibold">Filing deadlines</h1>
       <ModeSwitch mode={mode} onChange={changeMode} />
-      <form className="flex flex-col gap-2" onSubmit={submit}>
+      <form className="flex max-w-3xl flex-col gap-2" onSubmit={submit}>
         <label htmlFor={questionId} className="font-semibold">
           Your question
         </label>
