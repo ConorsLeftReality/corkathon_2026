@@ -5,6 +5,7 @@ import {
   clientListSchema,
   snapshotSchema,
 } from '#src/features/radar/radar-api.ts'
+import { reportSchema } from '#src/features/filings/filings-api.ts'
 
 describe('radar mock', () => {
   it('serves a snapshot that meets the contract', () => {
@@ -70,5 +71,23 @@ describe('radar mock', () => {
   it('leaves every other route to flask', () => {
     const mock = createRadarMock()
     expect(mock.handle('GET', '/api/notes', undefined)).toBeNull()
+  })
+})
+
+describe('filings mock', () => {
+  it('serves a report in the shape matteo/app.py writes', () => {
+    const reply = createRadarMock().handle('GET', '/api/report', undefined)
+    expect(reportSchema.safeParse(reply?.body).success).toBe(true)
+  })
+
+  it('serves the same report after a refresh', () => {
+    const reply = createRadarMock().handle('POST', '/api/refresh', undefined)
+    expect(reportSchema.safeParse(reply?.body).success).toBe(true)
+  })
+
+  it('serves the briefing as plain text', () => {
+    const reply = createRadarMock().handle('GET', '/api/briefing', undefined)
+    expect(reply?.text).toBe(true)
+    expect(String(reply?.body)).toStartWith('Filing briefing for')
   })
 })

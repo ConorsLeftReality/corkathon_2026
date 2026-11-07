@@ -4,7 +4,7 @@ import type { Plugin } from 'vite'
 // dev only stand in for the radar api, the contract lives in docs/02-architecture.md
 // every company here is made up and named Placeholder so nobody mistakes it for register data
 
-type Reply = { status: number; body: unknown }
+type Reply = { status: number; body: unknown; text?: boolean }
 
 const snapshot = { fetched_at: '2026-11-07T09:12:00Z', newest_reg_date: '2026-11-06', stale: false }
 
@@ -286,10 +286,84 @@ function ask(body: unknown): Reply {
   )
 }
 
+// the shape matteo/app.py writes to report.json
+function filingCompany(
+  num: string,
+  name: string,
+  status: string,
+  nard: string | null,
+  deadline: string | null,
+  daysLeft: number | null,
+) {
+  return {
+    company_num: num,
+    company_name: name,
+    company_status: name === '' ? '' : 'Normal',
+    company_type: name === '' ? '' : 'LTD - Private Company Limited by Shares',
+    address: name === '' ? '' : '1 Placeholder Street, Cork',
+    last_ar_date: nard === null ? null : '2025-09-01',
+    nard,
+    deadline,
+    days_left: daysLeft,
+    status,
+  }
+}
+
+const FILINGS_COMPANIES = [
+  filingCompany(
+    '700001',
+    'Placeholder Pharmacy Limited',
+    'overdue',
+    '2026-08-31',
+    '2026-10-26',
+    -12,
+  ),
+  filingCompany('700002', 'Placeholder Studios Limited', 'overdue', '2026-09-09', '2026-11-04', -3),
+  filingCompany('700003', 'Placeholder Dental Limited', 'due', '2026-09-15', '2026-11-10', 3),
+  filingCompany('700004', 'Placeholder Architects Limited', 'due', '2026-09-17', '2026-11-12', 5),
+  filingCompany('700005', 'Placeholder Veterinary Limited', 'due', '2026-10-13', '2026-12-08', 31),
+  filingCompany('700006', 'Placeholder Bakery Limited', 'ok', '2027-01-20', '2027-03-17', 130),
+  filingCompany('700099', '', 'not_found', null, null, null),
+]
+
+const FILINGS_REPORT = {
+  generated_at: '2026-11-07T09:12:00',
+  as_of: '2026-11-07',
+  window_days: 30,
+  grace_days: 56,
+  counts: { overdue: 2, due: 3, ok: 1, unknown: 0, dissolved: 0, not_found: 1 },
+  companies: FILINGS_COMPANIES,
+  source: 'Contains data from the Companies Registration Office (CRO), licensed under CC BY 4.0.',
+}
+
+const FILINGS_BRIEFING = `Filing briefing for 7 November 2026.
+
+Companies due to file
+3 companies are due to file in the next 30 days.
+Placeholder Dental Limited must file its annual return by 10 November 2026, which is in 3 days.
+Placeholder Architects Limited must file its annual return by 12 November 2026, which is in 5 days.
+Placeholder Veterinary Limited must file its annual return by 8 December 2026, which is in 31 days.
+
+Overdue companies
+2 companies are overdue.
+Placeholder Pharmacy Limited missed its deadline of 26 October 2026 and is 12 days overdue.
+Placeholder Studios Limited missed its deadline of 4 November 2026 and is 3 days overdue.
+`
+
+export const FILINGS_PATHS = ['/api/report', '/api/companies', '/api/briefing', '/api/refresh']
+
 export function createRadarMock() {
   let clients: string[] = []
 
   function handle(method: string, path: string, body: unknown): Reply | null {
+    if (path === '/api/report' && method === 'GET') return { status: 200, body: FILINGS_REPORT }
+    if (path === '/api/refresh' && method === 'POST') return { status: 200, body: FILINGS_REPORT }
+    if (path === '/api/companies' && method === 'GET') {
+      return { status: 200, body: FILINGS_COMPANIES }
+    }
+    if (path === '/api/briefing' && method === 'GET') {
+      return { status: 200, body: FILINGS_BRIEFING, text: true }
+    }
     if (path === '/api/radar/snapshot' && method === 'GET') return { status: 200, body: snapshot }
     if (path === '/api/radar/clients' && method === 'GET')
       return { status: 200, body: { company_numbers: clients } }
@@ -337,7 +411,7 @@ export function radarMock(): Plugin {
     configureServer(server) {
       server.middlewares.use((req: IncomingMessage, res: ServerResponse, next: () => void) => {
         const path = (req.url ?? '').split('?')[0] ?? ''
-        if (!path.startsWith('/api/radar/')) {
+        if (!path.startsWith('/api/radar/') && !FILINGS_PATHS.includes(path)) {
           next()
           return
         }
@@ -347,6 +421,11 @@ export function radarMock(): Plugin {
           // a short pause so loading states show the way they will against the real api
           setTimeout(() => {
             res.statusCode = reply.status
+            if (reply.text && typeof reply.body === 'string') {
+              res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+              res.end(reply.body)
+              return
+            }
             res.setHeader('Content-Type', 'application/json')
             res.end(JSON.stringify(reply.body))
           }, 400)
