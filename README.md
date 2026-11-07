@@ -70,6 +70,14 @@ bun run dev
 
 Open http://localhost:5173, sign in, and go to `/app/radar`.
 
+Until the radar API exists, run the web app against a mock instead (**Built**, dev only):
+
+```bash
+bun run dev:mock
+```
+
+This is `bun run dev` with `/api/radar/*` answered by `apps/web/dev/radar-mock.ts`: placeholder companies only, one shared client list, no AI. Sign-in still goes to the real Flask app. The mock is never part of a production build, and its unit tests check every response against the zod schemas in `apps/web/src/features/radar/radar-api.ts`, which is the contract the real API must meet.
+
 Call extension 100 (**Planned**): set up the Pi as described in [docs/06-runbook.md](docs/06-runbook.md), then pick up the desk phone and dial `100`.
 
 ## Docs
