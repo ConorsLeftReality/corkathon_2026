@@ -26,7 +26,7 @@ function ModeSwitch({ mode, onChange }: { mode: RadarMode; onChange: (mode: Rada
           <label
             key={option.value}
             className={cn(
-              'flex-1 cursor-pointer rounded-sm px-4 py-2 text-center text-label font-semibold has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-signal sm:flex-none',
+              'flex-1 cursor-pointer rounded-sm px-4 py-2 text-center text-label font-semibold has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-signal sm:flex-none',
               mode === option.value ? 'bg-signal text-rim' : 'text-graphite hover:bg-wash',
             )}
           >
@@ -123,7 +123,7 @@ function RadarResult({ state, presets, onPick }: ResultProps) {
       return (
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <p className="text-h2 font-semibold break-words" aria-live="polite">
+            <p className="text-h2 font-semibold wrap-break-word" aria-live="polite">
               {state.response.answer}
             </p>
             <SnapshotLine snapshot={state.response.snapshot} />

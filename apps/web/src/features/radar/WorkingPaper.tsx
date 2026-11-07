@@ -36,7 +36,7 @@ export function WorkingPaper({ question, response }: WorkingPaperProps) {
         </p>
         <ol className="flex list-decimal flex-col gap-5 pl-5">
           <Step title="Your question">
-            <p className="break-words">{question}</p>
+            <p className="wrap-break-word">{question}</p>
           </Step>
           <Step title="The filter the AI chose">
             <Code>{JSON.stringify(response.filter, null, 2)}</Code>
