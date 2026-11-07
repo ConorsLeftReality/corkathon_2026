@@ -15,3 +15,6 @@ report.json
 briefing.txt
 my_companies.csv
 cro_companies_*.csv.zip
+
+# the hackathon brief, kept local, docs/ is the source of truth
+PLAN.md
