@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { PASSWORD, signUp, uniqueEmail } from './session-steps.ts'
+import { openApp } from './session-steps.ts'
 
 async function expectNoAxeViolations(page: Page) {
   const { violations } = await new AxeBuilder({ page }).analyze()
@@ -15,36 +15,6 @@ async function expectNoSidewaysScroll(page: Page) {
   expect(overflow).toBeLessThanOrEqual(0)
 }
 
-test('the sign in screen passes axe and fits the viewport', async ({ page }) => {
-  await page.goto('/login')
-  await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible()
-  await expectNoAxeViolations(page)
-  await expectNoSidewaysScroll(page)
-})
-
-test('the notes screen passes axe and fits the viewport', async ({ page }) => {
-  await signUp(page)
-  await page.goto('/app/notes')
-  await page.getByLabel('New note').fill('x'.repeat(300))
-  await page.getByRole('button', { name: 'Add note' }).click()
-  await expect(page.getByRole('listitem')).toBeVisible()
-  await expectNoAxeViolations(page)
-  await expectNoSidewaysScroll(page)
-})
-
-test('an account can be created with the keyboard alone', async ({ page }) => {
-  const email = uniqueEmail()
-  await page.goto('/login')
-  await page.getByRole('button', { name: 'I need an account' }).focus()
-  await page.keyboard.press('Enter')
-  await page.getByLabel('Email').focus()
-  await page.keyboard.type(email)
-  await page.keyboard.press('Tab')
-  await page.keyboard.type(PASSWORD)
-  await page.keyboard.press('Enter')
-  await expect(page.getByText(email)).toBeVisible()
-})
-
 test('the page runs under the csp with no violations', async ({ page }) => {
   const violations: string[] = []
   page.on('console', (message) => {
@@ -52,7 +22,7 @@ test('the page runs under the csp with no violations', async ({ page }) => {
   })
   await page.goto('/')
   await expect(page.getByRole('link', { name: 'Open the app' })).toBeVisible()
-  await signUp(page)
+  await openApp(page)
   expect(violations).toEqual([])
 })
 
@@ -68,7 +38,7 @@ test('the landing page passes axe and fits the viewport', async ({ page }) => {
 })
 
 test('the today screen passes axe and fits the viewport', async ({ page }) => {
-  await signUp(page)
+  await openApp(page)
   await expect(page.getByRole('heading', { name: 'Today', exact: true })).toBeVisible()
   await expectNoAxeViolations(page)
   await expectNoSidewaysScroll(page)

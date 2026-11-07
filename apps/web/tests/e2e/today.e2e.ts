@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 import type { Page, Route } from '@playwright/test'
-import { signUp } from './session-steps.ts'
+import { openApp } from './session-steps.ts'
 
 // stubs matteo/app.py, the filings api, in the shape its report.json takes
 
@@ -65,7 +65,7 @@ async function stubFilings(
 }
 
 async function openToday(page: Page) {
-  await signUp(page)
+  await openApp(page)
   await expect(page.getByRole('heading', { name: 'Today', exact: true })).toBeVisible()
 }
 
