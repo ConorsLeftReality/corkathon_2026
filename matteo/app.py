@@ -46,11 +46,15 @@ DATA_DIR = os.environ.get("DATA_DIR", "data")
 REPORT_JSON = os.environ.get("REPORT_JSON", "report.json")
 BRIEFING_TXT = os.environ.get("BRIEFING_TXT", "briefing.txt")
 WINDOW_DAYS = int(os.environ.get("WINDOW_DAYS", "30"))   # "due soon" window
-GRACE_DAYS = 56                                          # return must reach CRO within 56 days of the ARD
-ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "")    # empty sends no CORS header; the web app calls through the Vite proxy
-HOST = os.environ.get("HOST", "127.0.0.1")              # 0.0.0.0 only together with FILINGS_TOKEN
-# requests must name this server in their Host header, which stops dns rebinding
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "")       # comma separated host:port, defaults to localhost
+# The return must reach the CRO within 56 days of the ARD
+GRACE_DAYS = 56
+# empty sends no CORS header; the web app calls through the Vite proxy
+ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "")
+# 0.0.0.0 only together with FILINGS_TOKEN
+HOST = os.environ.get("HOST", "127.0.0.1")
+# requests must name this server in their Host header, which stops DNS rebinding
+# comma separated host:port, defaults to localhost
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "")
 # when set, every request needs an X-Filings-Token header with this value
 FILINGS_TOKEN = os.environ.get("FILINGS_TOKEN", "")
 
@@ -58,7 +62,10 @@ CRO_SNAPSHOT_URL = (
     "https://opendata.cro.ie/dataset/bf6f837d-0946-4c14-9a99-82cd6980c121/"
     "resource/3fef41bc-b8f4-4b10-8434-ce51c29b1bba/download/companies.csv.zip"
 )
-ATTRIBUTION = "Contains data from the Companies Registration Office (CRO), licensed under CC BY 4.0."
+ATTRIBUTION = (
+    "Contains data from the Companies Registration Office (CRO), "
+    "licensed under CC BY 4.0."
+)
 
 
 # ---------------------------------------------------------------------------
@@ -93,6 +100,7 @@ def norm_num(value):
 
 
 def iso(d):
+    """Format a date as YYYY-MM-DD, or None if there is no date."""
     return d.isoformat() if d else None
 
 
@@ -135,6 +143,7 @@ def iter_snapshot_rows(path):
 # Step 2: load our list of company numbers
 # ---------------------------------------------------------------------------
 def load_my_companies(path):
+    """Read our CSV and return the set of normalised company numbers."""
     if not os.path.exists(path):
         raise FileNotFoundError(f"Company list not found: {path}")
     with open(path, encoding="utf-8-sig", newline="") as f:
@@ -144,7 +153,9 @@ def load_my_companies(path):
         return set()
     header = [h.strip().lower() for h in rows[0]]
     col = None
-    for candidate in ("company_num", "company_number", "number", "company no", "cro number", "cro_number"):
+    candidates = ("company_num", "company_number", "number",
+                  "company no", "cro number", "cro_number")
+    for candidate in candidates:
         if candidate in header:
             col = header.index(candidate)
             break
@@ -161,6 +172,7 @@ def load_my_companies(path):
 # Step 3: classify
 # ---------------------------------------------------------------------------
 def classify(row, today, window_days=WINDOW_DAYS):
+    """Turn one CRO snapshot row into a report entry with its filing status."""
     nard = parse_date(row.get("nard"))
     dissolved = parse_date(row.get("comp_dissolved_date"))
     deadline = nard + timedelta(days=GRACE_DAYS) if nard else None
@@ -177,9 +189,8 @@ def classify(row, today, window_days=WINDOW_DAYS):
     else:
         status = "ok"
 
-    address = ", ".join(
-        p.strip() for p in (row.get(f"company_address_{i}", "") for i in range(1, 5)) if p and p.strip()
-    )
+    parts = (row.get(f"company_address_{i}", "") for i in range(1, 5))
+    address = ", ".join(p.strip() for p in parts if p and p.strip())
     return {
         "company_num": norm_num(row.get("company_num", "")),
         "company_name": (row.get("company_name") or "").strip(),
@@ -198,7 +209,7 @@ STATUS_ORDER = {"overdue": 0, "due": 1, "ok": 2, "unknown": 3, "dissolved": 4, "
 
 
 def sort_key(c):
-    # overdue: most overdue first; due/ok: soonest deadline first
+    """Overdue first (most overdue at the top), then due and ok by soonest deadline."""
     dl = c["days_left"] if c["days_left"] is not None else 10**9
     return (STATUS_ORDER.get(c["status"], 9), dl, c["company_name"].lower())
 
@@ -207,6 +218,7 @@ def sort_key(c):
 # Steps 4-5: build report.json and briefing.txt
 # ---------------------------------------------------------------------------
 def build_report(snapshot_path=None, today=None, window_days=WINDOW_DAYS):
+    """Run the daily job: filter the snapshot, classify, sort, write both files."""
     today = today or date.today()
     wanted = load_my_companies(MY_COMPANIES_CSV)
     snapshot_path = snapshot_path or download_snapshot(today)
@@ -247,8 +259,19 @@ def build_report(snapshot_path=None, today=None, window_days=WINDOW_DAYS):
 
 
 def fmt_long_date(iso_str):
+    """'2026-11-17' -> '17 November 2026' (reads well aloud)."""
     d = date.fromisoformat(iso_str)
     return f"{d.day} {d.strftime('%B %Y')}"
+
+
+def company_word(count):
+    """'company is' or 'companies are', to match the count."""
+    return "company is" if count == 1 else "companies are"
+
+
+def display_name(company):
+    """The company's name, or 'Company <number>' if the CRO gave no name."""
+    return company["company_name"] or f"Company {company['company_num']}"
 
 
 def build_briefing(report):
@@ -259,12 +282,12 @@ def build_briefing(report):
 
     lines.append("Companies due to file")
     if due:
-        lines.append(f"{len(due)} {'company is' if len(due) == 1 else 'companies are'} due to file "
+        lines.append(f"{len(due)} {company_word(len(due))} due to file "
                      f"in the next {report['window_days']} days.")
         for c in due:
             n = c["days_left"]
             when = "today" if n == 0 else ("tomorrow" if n == 1 else f"in {n} days")
-            lines.append(f"{c['company_name'] or 'Company ' + c['company_num']} must file its annual return "
+            lines.append(f"{display_name(c)} must file its annual return "
                          f"by {fmt_long_date(c['deadline'])}, which is {when}.")
     else:
         lines.append(f"No companies are due to file in the next {report['window_days']} days.")
@@ -272,11 +295,12 @@ def build_briefing(report):
 
     lines.append("Overdue companies")
     if overdue:
-        lines.append(f"{len(overdue)} {'company is' if len(overdue) == 1 else 'companies are'} overdue.")
+        lines.append(f"{len(overdue)} {company_word(len(overdue))} overdue.")
         for c in overdue:
             n = -c["days_left"]
-            lines.append(f"{c['company_name'] or 'Company ' + c['company_num']} missed its deadline of "
-                         f"{fmt_long_date(c['deadline'])} and is {n} {'day' if n == 1 else 'days'} overdue.")
+            days = "day" if n == 1 else "days"
+            lines.append(f"{display_name(c)} missed its deadline of "
+                         f"{fmt_long_date(c['deadline'])} and is {n} {days} overdue.")
     else:
         lines.append("No companies are overdue.")
     lines.append("")
@@ -285,12 +309,14 @@ def build_briefing(report):
 
 def print_table(report):
     """'Show it': a quick table in the terminal."""
-    cols = [("status", 10), ("company_num", 9), ("company_name", 38), ("nard", 11), ("deadline", 11), ("days_left", 9)]
+    cols = [("status", 10), ("company_num", 9), ("company_name", 38),
+            ("nard", 11), ("deadline", 11), ("days_left", 9)]
     print(f"\nCRO filing report, as of {report['as_of']} (window {report['window_days']} days)")
     print("  ".join(name.upper().ljust(w) for name, w in cols))
     print("  ".join("-" * w for _, w in cols))
     for c in report["companies"]:
-        print("  ".join(str(c[name] if c[name] is not None else "")[:w].ljust(w) for name, w in cols))
+        cells = ("" if c[name] is None else str(c[name]) for name, _ in cols)
+        print("  ".join(cell[:w].ljust(w) for cell, (_, w) in zip(cells, cols)))
     print("\nTotals:", ", ".join(f"{k}={v}" for k, v in report["counts"].items() if v))
 
 
@@ -322,6 +348,7 @@ def guard():
 
 @app.after_request
 def add_cors(resp):
+    """Send a CORS header only when ALLOWED_ORIGIN is set; the web app uses the proxy."""
     if not ALLOWED_ORIGIN:
         return resp
     resp.headers["Access-Control-Allow-Origin"] = ALLOWED_ORIGIN
@@ -331,18 +358,28 @@ def add_cors(resp):
 
 
 def current_report():
-    """Return today's report, rebuilding it if it's missing or from a previous day."""
+    """Return today's report, rebuilding it if it's missing or from a previous day.
+    If the rebuild fails (e.g. the CRO site is down), serve the last good report
+    with "stale": true instead of an error."""
     today = date.today().isoformat()
+    report = None
     if os.path.exists(REPORT_JSON):
         with open(REPORT_JSON, encoding="utf-8") as f:
             report = json.load(f)
         if report.get("as_of") == today:
             return report
-    return build_report()
+    try:
+        return build_report()
+    except Exception:
+        if report is None:
+            raise
+        app.logger.exception("Rebuild failed; serving the report from %s", report.get("as_of"))
+        return {**report, "stale": True}
 
 
 @app.get("/api/health")
 def health():
+    """Simple check that the API is up."""
     return jsonify({"ok": True})
 
 
@@ -370,6 +407,7 @@ def api_companies():
 
 @app.get("/api/briefing")
 def api_briefing():
+    """Today's briefing as plain text, for ElevenLabs."""
     current_report()  # makes sure briefing.txt is today's
     with open(BRIEFING_TXT, encoding="utf-8") as f:
         return Response(f.read(), mimetype="text/plain; charset=utf-8")
@@ -383,6 +421,7 @@ def api_refresh():
 
 @app.errorhandler(Exception)
 def handle_error(e):
+    """Return errors as JSON so the TypeScript side can show them."""
     return jsonify({"error": str(e)}), 500
 
 
@@ -392,8 +431,10 @@ def handle_error(e):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="CRO filing tracker")
     parser.add_argument("command", nargs="?", default="serve", choices=["run", "serve"])
-    parser.add_argument("--snapshot", help="use a local CRO snapshot (.zip or .csv) instead of downloading")
-    parser.add_argument("--window", type=int, default=WINDOW_DAYS, help="days ahead that count as 'due'")
+    parser.add_argument("--snapshot",
+                        help="use a local CRO snapshot (.zip or .csv) instead of downloading")
+    parser.add_argument("--window", type=int, default=WINDOW_DAYS,
+                        help="days ahead that count as 'due'")
     parser.add_argument("--port", type=int, default=int(os.environ.get("PORT", "5000")))
     args = parser.parse_args()
 

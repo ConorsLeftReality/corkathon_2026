@@ -70,6 +70,13 @@ def create_app(settings: Settings | None = None) -> Flask:
         resolved.filings_window_days,
         today=lambda: resolved.filings_as_of or date.today(),
     )
+    allowed = {e.strip().lower() for e in resolved.filings_allowed_emails.split(",") if e.strip()}
+    app.config["FILINGS_ALLOWED_EMAILS"] = frozenset(allowed)
+    if not allowed and (resolved.filings_data_dir / "my_companies.csv").exists():
+        # sign up is open, so without a list any new account can read the client list
+        logger.warning(
+            "filings client list is readable by every account, set FILINGS_ALLOWED_EMAILS"
+        )
     app.register_blueprint(filings_routes)
     register_web_app(app, resolved.web_dist)
 

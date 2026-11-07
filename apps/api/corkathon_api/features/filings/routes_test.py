@@ -114,3 +114,35 @@ def test_a_missing_snapshot_downloads_in_the_background(filings_app: Flask, tmp_
     assert response.status_code == 503
     assert response.json is not None
     assert response.json["error"]["code"] == "filings_building"
+
+
+@pytest.fixture
+def allowlisted_app(build_app: Callable[..., Flask], data_dir: Path) -> Flask:
+    return build_app(
+        filings_data_dir=data_dir,
+        filings_as_of=AS_OF,
+        filings_allowed_emails="Ada@Example.com, grace@example.com",
+    )
+
+
+@pytest.mark.parametrize("path", ROUTES)
+def test_an_account_on_the_allowlist_reads_the_report(allowlisted_app: Flask, path: str) -> None:
+    client = allowlisted_app.test_client()
+    sign_up(client, "ada@example.com")
+    assert client.get(path).status_code == 200
+
+
+@pytest.mark.parametrize("path", ROUTES)
+def test_an_account_off_the_allowlist_is_refused(allowlisted_app: Flask, path: str) -> None:
+    client = allowlisted_app.test_client()
+    sign_up(client, "stranger@example.com")
+    response = client.get(path)
+    assert response.status_code == 403
+    assert response.json is not None
+    assert response.json["error"]["code"] == "filings_forbidden"
+
+
+def test_an_account_off_the_allowlist_cannot_rebuild(allowlisted_app: Flask) -> None:
+    client = allowlisted_app.test_client()
+    sign_up(client, "stranger@example.com")
+    assert client.post("/api/refresh", headers=csrf_headers(client)).status_code == 403

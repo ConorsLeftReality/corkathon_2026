@@ -220,6 +220,9 @@
     cursor: pointer;
     padding: 0.25rem 0.5rem;
     text-decoration: underline;
+    /* the font default is heavy at this size, links elsewhere use the same 1px */
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
     white-space: nowrap;
   }
 
