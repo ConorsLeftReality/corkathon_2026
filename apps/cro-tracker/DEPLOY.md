@@ -26,7 +26,9 @@ sudo dokku storage:ensure-directory cro-tracker
 sudo chown -R 1000:1000 /var/lib/dokku/data/storage/cro-tracker
 sudo dokku storage:mount cro-tracker /var/lib/dokku/data/storage/cro-tracker:/app/data
 
-sudo dokku config:set --no-restart cro-tracker ALLOWED_ORIGIN='*' WINDOW_DAYS=30
+# API_TOKEN keeps client lists private: every call except /api/health needs it.
+# Put the same value in the phone's /opt/filing-radar/.env as API_TOKEN.
+sudo dokku config:set --no-restart cro-tracker API_TOKEN="$(openssl rand -hex 32)" WINDOW_DAYS=30
 sudo dokku ports:set cro-tracker http:9001:5000
 ```
 
@@ -37,13 +39,15 @@ Then push. `.github/workflows/deploy-cro-tracker.yml` deploys it whenever `apps/
 ```bash
 sudo dokku cron:list cro-tracker                       # daily rebuild at 00:05
 sudo dokku run cro-tracker python scheduler.py --once  # build today's reports now
-curl http://127.0.0.1:9001/api/clients
+curl -H "Authorization: Bearer $API_TOKEN" http://127.0.0.1:9001/api/clients
 ```
 
 The API also rebuilds by itself on the first request of a new day, so the exact
 cron time doesn't matter.
 
 ## API
+
+Every route except `GET /api/health` needs `Authorization: Bearer <API_TOKEN>`. Set `ALLOWED_ORIGIN` only if a browser on another origin calls the API; by default no CORS header is sent.
 
 | Request | Returns |
 | --- | --- |

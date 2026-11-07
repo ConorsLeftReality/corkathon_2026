@@ -1,12 +1,12 @@
 services:
-  # The Flask API that Evan's site calls
+  # The Flask API the dashboard calls
   api:
     build: .
     restart: unless-stopped
     env_file: .env
     volumes:
       - cro-data:/app/data
-      - ./my_companies.csv:/app/my_companies.csv:ro
+      - ./clients:/app/clients:ro
     ports:
       - '127.0.0.1:5000:5000' # only reachable from the server itself; the public goes through caddy
     healthcheck:
@@ -21,7 +21,7 @@ services:
       timeout: 5s
       retries: 3
 
-  # The daily job: downloads the CRO snapshot and rebuilds report.json + briefing.txt
+  # The daily job: downloads the CRO snapshot and rebuilds every client report
   job:
     build: .
     restart: unless-stopped
@@ -29,7 +29,7 @@ services:
     command: ['python', 'scheduler.py']
     volumes:
       - cro-data:/app/data
-      - ./my_companies.csv:/app/my_companies.csv:ro
+      - ./clients:/app/clients:ro
 
   # HTTPS in front of the API, with automatic Let's Encrypt certificates
   caddy:

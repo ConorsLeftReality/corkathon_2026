@@ -16,7 +16,7 @@ What it does (once per day):
   6. Serves it all over HTTP so the TypeScript site can fetch it.
 
 Usage:
-  pip install flask
+  pip install -r requirements.txt
   python app.py run                  # build every client's report and print the tables
   python app.py run --client acme    # build, but only print one client
   python app.py serve                # start the API on http://localhost:5000
@@ -39,6 +39,7 @@ API:
 
 import argparse
 import csv
+import hmac
 import io
 import json
 import os
@@ -60,9 +61,11 @@ DATA_DIR = os.environ.get("DATA_DIR", os.path.join("data", "snapshots"))  # down
 REPORTS_DIR = os.environ.get("REPORTS_DIR", os.path.join("data", "reports"))
 DEFAULT_CLIENT = os.environ.get("DEFAULT_CLIENT", "").strip().lower()   # used by /api/report etc.
 CLIENT_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
+# every /api route except /api/health needs "Authorization: Bearer <API_TOKEN>" when set
+API_TOKEN = os.environ.get("API_TOKEN", "")
 WINDOW_DAYS = int(os.environ.get("WINDOW_DAYS", "30"))   # "due soon" window
 GRACE_DAYS = 56                                          # return must reach CRO within 56 days of the ARD
-ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "*")   # set to Evan's site URL in production
+ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "")   # the one site allowed to call it cross-origin, empty sends no CORS header
 
 CRO_SNAPSHOT_URL = (
     "https://opendata.cro.ie/dataset/bf6f837d-0946-4c14-9a99-82cd6980c121/"
@@ -340,16 +343,34 @@ def print_table(report):
 
 
 # ---------------------------------------------------------------------------
-# Flask API (what Evan's TypeScript site calls)
+# Flask API (what the web dashboard calls)
 # ---------------------------------------------------------------------------
 app = Flask(__name__)
 
 
+if not API_TOKEN:
+    app.logger.warning("API_TOKEN is not set: anyone who can reach this API can read every client list")
+
+
+@app.before_request
+def require_token():
+    if not API_TOKEN or request.method == "OPTIONS" or request.path == "/api/health":
+        return None
+    header = request.headers.get("Authorization", "")
+    given = header[len("Bearer "):] if header.startswith("Bearer ") else ""
+    if not hmac.compare_digest(given.encode(), API_TOKEN.encode()):
+        return jsonify({"error": "Missing or wrong API token"}), 401
+    return None
+
+
 @app.after_request
-def add_cors(resp):
-    resp.headers["Access-Control-Allow-Origin"] = ALLOWED_ORIGIN
-    resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+def add_headers(resp):
+    if ALLOWED_ORIGIN:
+        resp.headers["Access-Control-Allow-Origin"] = ALLOWED_ORIGIN
+        resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+        resp.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        resp.headers["Vary"] = "Origin"
+    resp.headers["X-Content-Type-Options"] = "nosniff"
     return resp
 
 
@@ -365,10 +386,10 @@ def resolve_client(client):
         elif len(files) == 1:
             client = next(iter(files))
         else:
-            abort(404, description=f"Pick a client: /api/<client>/report. Known: {', '.join(files) or 'none'}")
+            abort(404, description="Pick a client: /api/<client>/report. GET /api/clients lists them.")
     client = client.lower()
     if client not in files:
-        abort(404, description=f"Unknown client '{client}'. Known: {', '.join(files) or 'none'}")
+        abort(404, description="Unknown client")
     return client
 
 
@@ -469,7 +490,7 @@ def handle_error(e):
     if isinstance(e, HTTPException):
         return jsonify({"error": e.description}), e.code
     app.logger.exception("Request failed")
-    return jsonify({"error": str(e)}), 500
+    return jsonify({"error": "Internal error, see the server log"}), 500
 
 
 # ---------------------------------------------------------------------------
@@ -491,4 +512,5 @@ if __name__ == "__main__":
                 print_table(rep)
         print(f"\nWrote reports for {len(reps)} client(s) to {REPORTS_DIR}/")
     if args.command == "serve":
-        app.run(host="0.0.0.0", port=args.port, debug=False)
+        # the dev server; production runs gunicorn (see Dockerfile)
+        app.run(host=os.environ.get("HOST", "127.0.0.1"), port=args.port, debug=False)

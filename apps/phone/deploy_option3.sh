@@ -77,7 +77,7 @@ fi
 
 echo "== 5. Network"
 $AS $PY -c "import urllib.request as u; u.urlopen('https://www.google.com', timeout=5)" 2>/dev/null \
-  && ok "internet reachable" || warn "no internet - Google STT will fail (set TTS_ENGINE=piper for TTS)"
+  && ok "internet reachable" || warn "no internet - Google STT will fail"
 
 echo "== 6. Pre-render every answer with piper (slow on the Pi - several minutes the first time)"
 cat > /etc/cron.d/filing-radar <<CRON
