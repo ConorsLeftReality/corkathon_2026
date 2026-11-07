@@ -89,6 +89,7 @@ test('the working paper shows the filter and query that produced the answer', as
   await askQuestion(page, 'overdue cork hospitality')
 
   await page.getByText('How this was worked out').click()
+  await expect(page.getByRole('heading', { name: 'The filter the AI chose' })).toBeVisible()
   await expect(page.getByText('"overdue_only": true')).toBeVisible()
   await expect(page.getByText(answer.sql)).toBeVisible()
   await expect(
@@ -110,6 +111,11 @@ test('an example question runs its stored filter by id', async ({ page }) => {
     .click()
   await expect(page.getByText('12 Cork hospitality companies are overdue.')).toBeVisible()
   expect(sent).toEqual({ mode: 'prospects', preset: 'overdue_cork_hospitality' })
+
+  await page.getByText('How this was worked out').click()
+  await expect(page.getByText('No AI was used.', { exact: false })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'The stored filter' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'The filter the AI chose' })).toHaveCount(0)
 })
 
 test('switching to my clients searches the client list', async ({ page }) => {

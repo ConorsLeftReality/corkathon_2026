@@ -129,7 +129,11 @@ function RadarResult({ state, presets, onPick }: ResultProps) {
             <SnapshotLine snapshot={state.response.snapshot} />
           </div>
           <Ledger rows={state.response.rows} total={state.response.row_count} />
-          <WorkingPaper question={state.question} response={state.response} />
+          <WorkingPaper
+            question={state.question}
+            fromPreset={state.fromPreset}
+            response={state.response}
+          />
         </div>
       )
     default:

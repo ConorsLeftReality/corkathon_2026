@@ -19,9 +19,9 @@ function Code({ children }: { children: string }) {
   )
 }
 
-type WorkingPaperProps = { question: string; response: RadarAnswer }
+type WorkingPaperProps = { question: string; fromPreset: boolean; response: RadarAnswer }
 
-export function WorkingPaper({ question, response }: WorkingPaperProps) {
+export function WorkingPaper({ question, fromPreset, response }: WorkingPaperProps) {
   return (
     <details className="inset group">
       <summary className="cursor-pointer list-none px-4 py-3 font-semibold text-signal">
@@ -31,14 +31,15 @@ export function WorkingPaper({ question, response }: WorkingPaperProps) {
       </summary>
       <div className="flex flex-col gap-4 border-t border-line px-4 pt-4 pb-5">
         <p className="text-label text-graphite">
-          The AI only turned your question into the filter in step 2. The database did the rest,
-          including every date, count and penalty.
+          {fromPreset
+            ? 'No AI was used. This example question runs a stored filter, and the database did the rest, including every date, count and penalty.'
+            : 'The AI only turned your question into the filter in step 2. The database did the rest, including every date, count and penalty.'}
         </p>
         <ol className="flex list-decimal flex-col gap-5 pl-5">
           <Step title="Your question">
             <p className="wrap-break-word">{question}</p>
           </Step>
-          <Step title="The filter the AI chose">
+          <Step title={fromPreset ? 'The stored filter' : 'The filter the AI chose'}>
             <Code>{JSON.stringify(response.filter, null, 2)}</Code>
           </Step>
           <Step title="The query that ran">

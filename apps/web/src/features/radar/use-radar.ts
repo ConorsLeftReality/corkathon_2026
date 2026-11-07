@@ -6,7 +6,7 @@ import type { RadarAnswer, RadarMode, RadarSnapshot } from '#src/features/radar/
 export type RadarState =
   | { status: 'idle' }
   | { status: 'loading'; question: string }
-  | { status: 'answer'; question: string; response: RadarAnswer }
+  | { status: 'answer'; question: string; fromPreset: boolean; response: RadarAnswer }
   | {
       status: 'reply'
       question: string
@@ -37,8 +37,9 @@ export function useRadar(mode: RadarMode, onSessionLost: () => void) {
           preset === undefined ? { mode, question } : { mode, preset },
         )
         if (ticket !== latest.current) return
-        if (response.kind === 'answer') setState({ status: 'answer', question, response })
-        else setState({ status: 'reply', question, ...response })
+        if (response.kind === 'answer') {
+          setState({ status: 'answer', question, fromPreset: preset !== undefined, response })
+        } else setState({ status: 'reply', question, ...response })
       } catch (error) {
         if (!(error instanceof ApiError)) throw error
         if (ticket !== latest.current) return
