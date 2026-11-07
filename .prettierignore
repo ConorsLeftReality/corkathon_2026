@@ -1,0 +1,7 @@
+# docs are hand wrapped and prettier pads every table
+*.md
+bun.lock
+dist/
+apps/api/
+test-results/
+playwright-report/

@@ -1,0 +1,2 @@
+# proper names that contain a slop word, matched case sensitive
+Elevate Tweaks

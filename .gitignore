@@ -1,0 +1,11 @@
+node_modules
+dist
+test-results
+playwright-report
+.env
+.venv
+__pycache__
+.mypy_cache
+.ruff_cache
+.pytest_cache
+apps/api/instance

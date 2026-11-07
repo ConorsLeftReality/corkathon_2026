@@ -1,0 +1,14 @@
+services:
+  app:
+    build: .
+    ports:
+      # loopback only, so nothing can skip the proxy and forge X-Forwarded-For
+      - '127.0.0.1:5001:5001'
+    environment:
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?set JWT_SECRET_KEY}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-0}
+    volumes:
+      - data:/data
+
+volumes:
+  data:

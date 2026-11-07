@@ -1,0 +1,25 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - uses: astral-sh/setup-uv@v6
+      - run: bun install --frozen-lockfile
+      - run: uv sync --directory apps/api --frozen
+      - run: bunx playwright install --with-deps chromium
+      - name: commit messages
+        if: github.event_name == 'pull_request'
+        run: bun scripts/lint-commit-msg.ts --range origin/${{ github.base_ref }}..HEAD
+      - run: bun run check
