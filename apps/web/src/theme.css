@@ -24,16 +24,18 @@
   --color-*: initial;
   --color-white: #ffffff;
   --color-black: #000000;
-  --color-ink: #101822;
-  --color-graphite: #4a5768;
-  --color-haze: #7a8a9e;
-  --color-shell: #edf0f5;
+  /* ledger pad: green ruled paper, blue black ink, red ink for overdue */
+  --color-ink: #16201b;
+  --color-graphite: #46544b;
+  --color-haze: #74867a;
+  --color-shell: #e8eee9;
   --color-rim: #ffffff;
-  --color-signal: #3a2fe0;
-  --color-signal-deep: #2f26b8;
-  --color-signal-tint: #eceafc;
-  --color-edge-soft: #e2cbff;
-  --color-edge-cool: #14aac8;
+  --color-rule: #b5c9bc;
+  --color-signal: #1f3d8f;
+  --color-signal-deep: #182f6e;
+  --color-signal-tint: #e4e9f5;
+  --color-edge-soft: #c9dccf;
+  --color-edge-cool: #5f7fc8;
 
   /* outcomes only, never decoration. body size text uses the -deep shade to clear 4.5:1 */
   --color-success: #0e8f63;
@@ -46,9 +48,9 @@
   --color-danger-deep: #a12d24;
   --color-danger-tint: #fbe8e6;
 
-  --color-line: rgb(16 24 34 / 0.08);
-  --color-line-strong: rgb(16 24 34 / 0.14);
-  --color-wash: rgb(16 24 34 / 0.035);
+  --color-line: rgb(22 32 27 / 0.09);
+  --color-line-strong: rgb(22 32 27 / 0.16);
+  --color-wash: rgb(22 32 27 / 0.04);
 
   --font-sans: 'Mona Sans', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
@@ -128,7 +130,7 @@
     line-height: var(--text-body--line-height);
   }
 
-  /* blur over flat grey shows nothing, this one still field is what the glass sits against */
+  /* the faint rulings of a columnar pad, text itself always sits on solid sheets */
   body::before {
     content: '';
     position: fixed;
@@ -136,8 +138,11 @@
     z-index: -1;
     pointer-events: none;
     background:
-      radial-gradient(60% 50% at 12% 8%, rgb(58 47 224 / 0.07), transparent 70%),
-      radial-gradient(50% 45% at 88% 92%, rgb(20 170 200 / 0.06), transparent 70%),
+      repeating-linear-gradient(
+        to bottom,
+        transparent 0 31px,
+        color-mix(in srgb, var(--color-rule) 45%, transparent) 31px 32px
+      ),
       var(--color-shell);
   }
 
@@ -184,6 +189,15 @@
   }
 
   .tabular {
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  /* mona sans narrowed on its width axis so a three digit count still reads at a glance */
+  .figure {
+    font-size: var(--text-metric);
+    line-height: var(--text-metric--line-height);
+    font-stretch: 75%;
+    font-weight: 700;
     font-variant-numeric: tabular-nums lining-nums;
   }
 
