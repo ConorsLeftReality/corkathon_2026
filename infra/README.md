@@ -4,6 +4,7 @@ Everything that runs on the Raspberry Pi outside the app containers. The steps t
 
 | Path | What it is | Where it ends up |
 |---|---|---|
+| `pi/harden.sh`, `pi/firewall.nft` | Key-only SSH, a firewall that gives the wifi replies only, unused Asterisk channels off, automatic security updates | `/etc/ssh/sshd_config.d/10-dialed-in.conf`, `/etc/dialed-in/firewall.nft`, `dialed-in-firewall.service` |
 | `pi/network.sh` | Turns `eth0` into the private phone LAN `10.99.99.0/24`, pins the DECT base, installs chrony | NetworkManager connection `lan` |
 | `asterisk/asterisk.service` | systemd unit for Asterisk built from source | `/etc/systemd/system/` |
 | `asterisk/extensions.conf` | Extensions: `100` is the Dialed-In menu, `1001` to `1010` ring each other, `[autocall]` plays outbound calls | `/etc/asterisk/` |

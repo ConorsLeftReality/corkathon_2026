@@ -1,0 +1,23 @@
+#!/usr/sbin/nft -f
+# /etc/dialed-in/firewall.nft - installed by infra/pi/harden.sh
+# The wifi (wlan0) is someone else's network, so it only gets replies to traffic the Pi started.
+# Everything is served over Tailscale, and the phone LAN on eth0 is left alone.
+# Its own table, so Docker's and Tailscale's rules are never flushed.
+
+table inet dialed_in
+delete table inet dialed_in
+
+table inet dialed_in {
+	chain input {
+		type filter hook input priority -10; policy accept;
+		iifname != "wlan0" accept
+		ct state established,related accept
+		# ipv6 neighbour discovery and ping
+		meta l4proto { icmp, ipv6-icmp } accept
+		# dhcp and dhcpv6 replies from the router
+		udp dport { 68, 546 } accept
+		# tailscale's direct connections
+		udp dport 41641 accept
+		counter drop
+	}
+}

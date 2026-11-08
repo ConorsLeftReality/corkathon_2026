@@ -38,6 +38,7 @@ cd ~/corkathon2026 && git pull
 sudo bash infra/asterisk/install.sh      # dialplan changes
 sudo bash infra/asterisk/make_prompts.sh # any new prompts
 sudo bash infra/phone/deploy.sh          # phone scripts and cron
+sudo bash infra/pi/harden.sh             # ssh, firewall, security updates
 ```
 
 All three are safe to rerun and keep existing passwords, settings and recorded prompts.

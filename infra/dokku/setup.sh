@@ -20,6 +20,8 @@ app() {
   dokku storage:ensure-directory "$name" >/dev/null
   # both images run as uid 1000
   chown -R 1000:1000 "$STORE/$name"
+  # the sqlite file holds password hashes, so no other local user may read it
+  chmod 700 "$STORE/$name"
   if ! dokku storage:list "$name" 2>/dev/null | grep -q "$STORE/$name:$mount"; then
     dokku storage:mount "$name" "$STORE/$name:$mount"
   fi
