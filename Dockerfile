@@ -30,5 +30,6 @@ ENV PATH=/app/.venv/bin:$PATH \
 USER app
 VOLUME /data
 EXPOSE 5001
-HEALTHCHECK --interval=30s --timeout=3s CMD ["python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:5001/api/health')"]
+# dokku overrides PORT, and python alone takes 2 to 3s to start on the pi
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s CMD ["python", "-c", "import os, urllib.request as u; u.urlopen('http://127.0.0.1:%s/api/health' % os.environ.get('PORT', '5001'), timeout=5)"]
 CMD ["python", "-m", "corkathon_api.serve"]
