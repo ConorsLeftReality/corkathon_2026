@@ -12,7 +12,7 @@ The phone system that runs today differs from the plan below:
 | FastAGI service in the API | Asterisk runs `infra/phone/transcribe_audio.py` per question; answers pre-rendered with Piper |
 | Linphone fallback | Zoiper over a Tailscale subnet route |
 
-The config is in [infra/asterisk](../infra/asterisk) and [infra/phone](../infra/phone/README.md), and the setup steps are in [deployment](deployment/README.md). The rest of this page is the original plan, kept for the design reasoning, and is **Planned**.
+The config is in [infra/asterisk](../../infra/asterisk) and [infra/phone](../../infra/phone/README.md), and the setup steps are in [deployment](../deployment/README.md). The rest of this page is the original plan, kept for the design reasoning, and is **Planned**.
 
 ## Numbers on the phone
 

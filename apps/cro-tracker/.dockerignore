@@ -8,4 +8,3 @@ briefing.txt
 *.zip
 venv/
 .venv/
-deploy/

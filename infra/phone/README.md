@@ -1,6 +1,6 @@
 # CRO Tracker phone scripts
 
-Python scripts that run on the Pi beside Asterisk. They read the client report from [cro-tracker](../../apps/cro-tracker/DEPLOY.md). Install and test them with `sudo bash infra/phone/deploy.sh`; the full steps and troubleshooting are in [docs/deployment/04-phone.md](../../docs/deployment/04-phone.md).
+Python scripts that run on the Pi beside Asterisk. They read the client report from [cro-tracker](../../docs/deployment/03-dokku-and-apps.md#cro-tracker-api). Install and test them with `sudo bash infra/phone/deploy.sh`; the full steps and troubleshooting are in [docs/deployment/04-phone.md](../../docs/deployment/04-phone.md).
 
 | File | Installed to | Purpose |
 | --- | --- | --- |

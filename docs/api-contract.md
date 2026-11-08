@@ -50,7 +50,7 @@ The CSV needs a `company_num` column (or `company_number`, `cro number` and simi
 
 The zod schema for the report is `reportSchema` in `apps/web/src/features/filings/filings-api.ts`. Each company has `company_num`, `company_name`, `company_status`, `company_type`, `address`, `last_ar_date`, `nard`, `deadline`, `days_left` (negative when overdue) and `status` (`overdue`, `due`, `ok`, `unknown`, `dissolved` or `not_found`). Errors come back as `{"error": {"code": ..., "message": ...}}`; the page shows the message.
 
-The separate multi-client tracker the phone reads from is `apps/cro-tracker`, documented in [its DEPLOY.md](../apps/cro-tracker/DEPLOY.md).
+The separate multi-client tracker the phone reads from is `apps/cro-tracker`, documented in [deployment step 3](deployment/03-dokku-and-apps.md#cro-tracker-api).
 
 ## Radar API (partly built)
 

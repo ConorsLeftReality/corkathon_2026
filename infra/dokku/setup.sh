@@ -27,7 +27,7 @@ app() {
   echo "ready: $name on port $port"
 }
 
-app corkathon2026 9000 5001 /data
+app corkathon2026 9000 5000 /data
 has_config corkathon2026 JWT_SECRET_KEY \
   || dokku config:set --no-restart corkathon2026 JWT_SECRET_KEY="$(openssl rand -hex 32)"
 has_config corkathon2026 TRUSTED_PROXIES \

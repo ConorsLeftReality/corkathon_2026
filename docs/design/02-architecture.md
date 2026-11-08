@@ -1,6 +1,6 @@
 # Architecture
 
-Everything on this page is **Planned** unless marked **Built**. The scaffold it sits on (Flask app factory, sign-in, SQLite, React shell, CI) is **Built**, see [scaffold.md](scaffold.md).
+Everything on this page is **Planned** unless marked **Built**. The scaffold it sits on (Flask app factory, sign-in, SQLite, React shell, CI) is **Built**, see [scaffold.md](../scaffold.md).
 
 ## Components
 

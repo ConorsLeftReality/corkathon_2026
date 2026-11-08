@@ -50,7 +50,7 @@ describe('lint slop', () => {
 
   it('ignores unchecked file types and the word list', () => {
     expect(messages('a.png', 'delve')).toEqual([])
-    expect(messages('skills/slop-words.txt', 'delve')).toEqual([])
+    expect(messages('scripts/slop-words.txt', 'delve')).toEqual([])
   })
 
   it('lets allowlisted names through but still flags the bare word', () => {
