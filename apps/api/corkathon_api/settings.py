@@ -2,7 +2,7 @@ from datetime import date
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import AliasChoices, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -24,10 +24,14 @@ class Settings(BaseSettings):
     host: str = "127.0.0.1"
     port: int = Field(default=5001, ge=1, le=65535)
     web_dist: Path = REPO_ROOT / "apps" / "web" / "dist"
-    # cro snapshot, my_companies.csv and the cached report, /data/filings in the container
+    # the cro snapshot and the daily register index built from it, /data/filings in the container
     filings_data_dir: Path = REPO_ROOT / "apps" / "api" / "instance" / "filings"
     filings_window_days: int = Field(default=30, ge=1, le=365)
     # a fixed date for a reproducible demo, today when unset
     filings_as_of: date | None = None
-    # comma separated, when set only these accounts can read the shared client report
-    filings_allowed_emails: str = ""
+    # tests turn this off so the register index is built inside the request
+    filings_build_in_background: bool = True
+    # emails or @domain entries, comma separated, production lets nobody in when empty
+    allowed_emails: str = Field(
+        default="", validation_alias=AliasChoices("allowed_emails", "filings_allowed_emails")
+    )

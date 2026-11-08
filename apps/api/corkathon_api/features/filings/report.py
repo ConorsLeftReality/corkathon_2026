@@ -2,11 +2,12 @@
 
 import csv
 import io
+import re
 import zipfile
 from collections.abc import Iterable, Iterator, Mapping
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import TypedDict
+from typing import NamedTuple, TypedDict
 
 # a return must reach the cro within 56 days of the annual return date
 GRACE_DAYS = 56
@@ -22,6 +23,8 @@ DATE_FORMATS = (
     "%d/%m/%Y %H:%M:%S",
     "%d-%m-%Y",
 )
+# cro numbers are digits only, spreadsheets sometimes add a trailing .0
+COMPANY_NUMBER = re.compile(r"^\d{1,10}(\.0)?$")
 NUMBER_HEADERS = (
     "company_num",
     "company_number",
@@ -212,19 +215,25 @@ def build_briefing(report: Report) -> str:
     return "\n".join(lines)
 
 
-def load_company_numbers(path: Path) -> set[str]:
-    with path.open(encoding="utf-8-sig", newline="") as handle:
-        rows = [r for r in csv.reader(handle) if r and any(cell.strip() for cell in r)]
+class ParsedNumbers(NamedTuple):
+    numbers: set[str]
+    invalid: int
+
+
+def parse_company_numbers(text: str) -> ParsedNumbers:
+    rows = [r for r in csv.reader(io.StringIO(text)) if r and any(cell.strip() for cell in r)]
     if not rows:
-        return set()
+        return ParsedNumbers(set(), 0)
     header = [cell.strip().lower() for cell in rows[0]]
     column = next((header.index(name) for name in NUMBER_HEADERS if name in header), None)
     if column is None:
         column = 0
-        data = rows if rows[0][0].strip().isdigit() else rows[1:]
+        data = rows if COMPANY_NUMBER.match(rows[0][0].strip()) else rows[1:]
     else:
         data = rows[1:]
-    return {norm_num(r[column]) for r in data if len(r) > column and r[column].strip()}
+    cells = [r[column].strip() for r in data if len(r) > column and r[column].strip()]
+    numbers = {norm_num(cell) for cell in cells if COMPANY_NUMBER.match(cell)}
+    return ParsedNumbers(numbers, sum(1 for cell in cells if not COMPANY_NUMBER.match(cell)))
 
 
 def iter_snapshot_rows(path: Path) -> Iterator[dict[str, str]]:

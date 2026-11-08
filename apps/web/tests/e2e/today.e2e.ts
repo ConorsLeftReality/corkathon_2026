@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 import type { Page, Route } from '@playwright/test'
+import { uploadClientCsv } from './clients-steps.ts'
 import { PASSWORD, signUp, uniqueEmail } from './session-steps.ts'
 
 // stubs the filings api, in the shape its report.json takes
@@ -252,6 +253,8 @@ test('says the report is being built while the cro file downloads', async ({ pag
 // no stubs: the built app, the real flask filings routes and the fixture snapshot from playwright.config.ts
 test('today reads the real filings api behind sign in', async ({ page }) => {
   await openToday(page)
+  await uploadClientCsv(page, 'company_num\n700001\n700002\n700003\n')
+  await page.goto('/app')
   const overdue = page.getByRole('table', { name: 'Your clients: overdue' })
   await expect(overdue.getByRole('rowheader', { name: /E2E OVERDUE LIMITED/ })).toBeVisible()
   const due = page.getByRole('table', { name: 'Your clients: due in the next 30 days' })
@@ -261,21 +264,4 @@ test('today reads the real filings api behind sign in', async ({ page }) => {
   await page.getByRole('button', { name: 'Rebuild report' }).click()
   await expect(page.getByRole('alert')).toHaveCount(0)
   await expect(overdue.getByRole('rowheader', { name: /E2E OVERDUE LIMITED/ })).toBeVisible()
-})
-
-test('an account without access is told to ask for it', async ({ page }) => {
-  await stubFilings(page, {
-    reportBody: {
-      error: {
-        code: 'filings_forbidden',
-        message: 'This account cannot see the filings report. Ask your admin to add your email.',
-      },
-    },
-    reportStatus: 403,
-  })
-  await openToday(page)
-  await expect(page.getByRole('alert')).toHaveText(
-    'This account cannot see the filings report. Ask your admin to add your email.',
-  )
-  await expect(page.getByRole('table')).toHaveCount(0)
 })

@@ -8,8 +8,8 @@ from corkathon_api.features.filings.report import (
     build_report,
     classify,
     iter_snapshot_rows,
-    load_company_numbers,
     norm_num,
+    parse_company_numbers,
     parse_date,
 )
 
@@ -87,16 +87,20 @@ def test_the_briefing_reads_out_due_and_overdue_companies() -> None:
     assert "Late Ltd missed its deadline of 27 October 2026 and is 11 days overdue." in text
 
 
-def test_the_client_list_reads_a_company_num_column(tmp_path: Path) -> None:
-    path = tmp_path / "clients.csv"
-    path.write_text("company_num,notes\n012345,Acme\n678,Other\n", encoding="utf-8")
-    assert load_company_numbers(path) == {"12345", "678"}
+def test_the_client_list_reads_a_company_num_column() -> None:
+    parsed = parse_company_numbers("company_num,notes\n012345,Acme\n678,Other\n")
+    assert parsed.numbers == {"12345", "678"}
+    assert parsed.invalid == 0
 
 
-def test_the_client_list_falls_back_to_the_first_column(tmp_path: Path) -> None:
-    path = tmp_path / "clients.csv"
-    path.write_text("12345\n678\n", encoding="utf-8")
-    assert load_company_numbers(path) == {"12345", "678"}
+def test_the_client_list_falls_back_to_the_first_column() -> None:
+    assert parse_company_numbers("12345\n678.0\n").numbers == {"12345", "678"}
+
+
+def test_anything_that_is_not_a_company_number_is_counted_and_dropped() -> None:
+    parsed = parse_company_numbers("cro number\n123\n=HYPERLINK(1)\nIE999\n12345678901\n")
+    assert parsed.numbers == {"123"}
+    assert parsed.invalid == 3
 
 
 def test_snapshot_rows_come_out_of_a_zip(tmp_path: Path) -> None:

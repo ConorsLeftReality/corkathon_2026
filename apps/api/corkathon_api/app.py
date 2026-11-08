@@ -5,8 +5,10 @@ from flask import Flask, Response, request
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from corkathon_api.database import db
+from corkathon_api.features.auth.access import AccessList
 from corkathon_api.features.auth.routes import auth_routes
 from corkathon_api.features.auth.session import configure_sessions
+from corkathon_api.features.clients.routes import clients_routes
 from corkathon_api.features.filings.routes import filings_routes
 from corkathon_api.features.filings.service import FilingsService
 from corkathon_api.features.health import health_routes
@@ -59,6 +61,14 @@ def create_app(settings: Settings | None = None) -> Flask:
         )
 
     db.init_app(app)
+    access = AccessList.parse(
+        resolved.allowed_emails, open_when_empty=resolved.app_env == "development"
+    )
+    app.extensions["access_list"] = access
+    if access.open:
+        logger.warning("sign up is open to any email, set ALLOWED_EMAILS to restrict it")
+    elif not access.emails and not access.domains:
+        logger.warning("ALLOWED_EMAILS is empty, so nobody can sign up or sign in")
     configure_sessions(app)
     per_minute = resolved.auth_rate_limit_per_minute
     app.extensions["auth_pair_limiter"] = RateLimiter(per_minute, 60, monotonic)
@@ -75,14 +85,9 @@ def create_app(settings: Settings | None = None) -> Flask:
         resolved.filings_data_dir,
         resolved.filings_window_days,
         today=lambda: resolved.filings_as_of or date.today(),
+        background=resolved.filings_build_in_background,
     )
-    allowed = {e.strip().lower() for e in resolved.filings_allowed_emails.split(",") if e.strip()}
-    app.config["FILINGS_ALLOWED_EMAILS"] = frozenset(allowed)
-    if not allowed and (resolved.filings_data_dir / "my_companies.csv").exists():
-        # sign up is open, so without a list any new account can read the client list
-        logger.warning(
-            "filings client list is readable by every account, set FILINGS_ALLOWED_EMAILS"
-        )
+    app.register_blueprint(clients_routes)
     app.register_blueprint(filings_routes)
     app.extensions["radar"] = RadarService(app.extensions["filings"])
     app.register_blueprint(radar_routes)

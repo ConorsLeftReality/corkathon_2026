@@ -20,7 +20,8 @@ def make_settings(tmp_path: Path, **overrides: object) -> Settings:
         "web_dist": tmp_path / "dist",
         "auth_rate_limit_per_minute": 1000,
         # pinned so a developer's own .env allowlist never leaks into tests
-        "filings_allowed_emails": "",
+        "allowed_emails": "",
+        "filings_build_in_background": False,
     }
     return Settings(**{**values, **overrides})  # type: ignore[arg-type]
 

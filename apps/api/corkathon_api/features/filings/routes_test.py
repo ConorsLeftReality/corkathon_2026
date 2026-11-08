@@ -10,6 +10,7 @@ from flask import Flask
 from flask.testing import FlaskClient
 
 from conftest import csrf_headers, sign_up
+from corkathon_api.features.auth.access import AccessList
 from corkathon_api.features.filings.service import FilingsService
 
 AS_OF = date(2026, 11, 7)
@@ -62,12 +63,28 @@ def test_refresh_needs_a_session(filings_app: Flask) -> None:
     assert filings_app.test_client().post("/api/refresh").status_code == 401
 
 
-def test_the_report_uses_the_demo_list_until_a_client_list_exists(signed_in: FlaskClient) -> None:
+def add_clients(client: FlaskClient, *numbers: str) -> None:
+    for number in numbers:
+        response = client.post(
+            "/api/clients", json={"company_num": number}, headers=csrf_headers(client)
+        )
+        assert response.status_code == 201
+
+
+def test_a_new_account_starts_with_an_empty_report(signed_in: FlaskClient) -> None:
+    response = signed_in.get("/api/report")
+    assert response.status_code == 200
+    assert response.json is not None
+    assert response.json["as_of"] == "2026-11-07"
+    assert response.json["companies"] == []
+
+
+def test_the_report_reads_the_accounts_own_clients(signed_in: FlaskClient) -> None:
+    add_clients(signed_in, "104547", "12965", "111471", "999999999")
     response = signed_in.get("/api/report")
     assert response.status_code == 200
     report = response.json
     assert report is not None
-    assert report["as_of"] == "2026-11-07"
     statuses = {c["company_num"]: c["status"] for c in report["companies"]}
     assert statuses == {
         "104547": "due",
@@ -78,21 +95,28 @@ def test_the_report_uses_the_demo_list_until_a_client_list_exists(signed_in: Fla
     assert report["companies"][0]["company_name"] == "KERRY GROUP PLC"
 
 
-def test_my_companies_csv_replaces_the_demo_list(signed_in: FlaskClient, data_dir: Path) -> None:
-    (data_dir / "my_companies.csv").write_text("company_num\n500\n", encoding="utf-8")
-    response = signed_in.post("/api/refresh", headers=csrf_headers(signed_in))
-    assert response.status_code == 200
-    assert response.json is not None
-    assert [c["company_name"] for c in response.json["companies"]] == ["NOT A CLIENT LTD"]
+@pytest.mark.parametrize("path", ROUTES)
+def test_one_account_never_sees_another_accounts_clients(
+    filings_app: Flask, signed_in: FlaskClient, path: str
+) -> None:
+    add_clients(signed_in, "500")
+    other = filings_app.test_client()
+    sign_up(other, "grace@example.com")
+    add_clients(other, "104547")
+    body = other.get(path).get_data(as_text=True)
+    assert "RYANAIR DAC" in body
+    assert "NOT A CLIENT LTD" not in body
 
 
 def test_status_filters_the_list(signed_in: FlaskClient) -> None:
+    add_clients(signed_in, "104547", "12965", "111471")
     response = signed_in.get("/api/companies?status=overdue,due")
     assert response.json is not None
     assert [c["status"] for c in response.json] == ["overdue", "due"]
 
 
 def test_the_briefing_is_plain_text(signed_in: FlaskClient) -> None:
+    add_clients(signed_in, "104547")
     response = signed_in.get("/api/briefing")
     assert response.status_code == 200
     assert response.mimetype == "text/plain"
@@ -110,6 +134,7 @@ def test_a_missing_snapshot_downloads_in_the_background(filings_app: Flask, tmp_
     )
     client = filings_app.test_client()
     sign_up(client, "ada@example.com")
+    add_clients(client, "104547")
     response = client.get("/api/report")
     assert response.status_code == 503
     assert response.json is not None
@@ -121,7 +146,7 @@ def allowlisted_app(build_app: Callable[..., Flask], data_dir: Path) -> Flask:
     return build_app(
         filings_data_dir=data_dir,
         filings_as_of=AS_OF,
-        filings_allowed_emails="Ada@Example.com, grace@example.com",
+        allowed_emails="Ada@Example.com, grace@example.com",
     )
 
 
@@ -132,17 +157,15 @@ def test_an_account_on_the_allowlist_reads_the_report(allowlisted_app: Flask, pa
     assert client.get(path).status_code == 200
 
 
-@pytest.mark.parametrize("path", ROUTES)
-def test_an_account_off_the_allowlist_is_refused(allowlisted_app: Flask, path: str) -> None:
+@pytest.mark.parametrize("path", [*ROUTES, "/api/refresh"])
+def test_an_account_taken_off_the_list_loses_the_report(allowlisted_app: Flask, path: str) -> None:
     client = allowlisted_app.test_client()
-    sign_up(client, "stranger@example.com")
-    response = client.get(path)
-    assert response.status_code == 403
+    sign_up(client, "ada@example.com")
+    allowlisted_app.extensions["access_list"] = AccessList.parse(
+        "grace@example.com", open_when_empty=False
+    )
+    method = client.post if path == "/api/refresh" else client.get
+    response = method(path, headers=csrf_headers(client))
+    assert response.status_code == 401
     assert response.json is not None
-    assert response.json["error"]["code"] == "filings_forbidden"
-
-
-def test_an_account_off_the_allowlist_cannot_rebuild(allowlisted_app: Flask) -> None:
-    client = allowlisted_app.test_client()
-    sign_up(client, "stranger@example.com")
-    assert client.post("/api/refresh", headers=csrf_headers(client)).status_code == 403
+    assert response.json["error"]["code"] == "invalid_session"

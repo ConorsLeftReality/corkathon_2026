@@ -4,6 +4,7 @@ from flask import Flask, Response
 from flask_jwt_extended import JWTManager, get_current_user
 
 from corkathon_api.database import db
+from corkathon_api.features.auth.access import access_list
 from corkathon_api.features.auth.models import User
 from corkathon_api.http_errors import error_response
 
@@ -20,7 +21,11 @@ def configure_sessions(app: Flask) -> None:
 
     @jwt.user_lookup_loader
     def load_user(_header: dict[str, Any], payload: dict[str, Any]) -> User | None:
-        return db.session.get(User, int(payload["sub"]))
+        user = db.session.get(User, int(payload["sub"]))
+        # taking an email off the list ends its sessions on the next request
+        if user is None or not access_list().allows(user.email):
+            return None
+        return user
 
     @jwt.unauthorized_loader
     def not_signed_in(_reason: str) -> tuple[Response, int]:

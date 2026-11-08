@@ -6,8 +6,9 @@ from flask_jwt_extended import jwt_required
 from pydantic import BaseModel, Field, model_validator
 
 from corkathon_api.errors import AppError
+from corkathon_api.features.auth.session import signed_in_user
+from corkathon_api.features.clients.service import client_numbers
 from corkathon_api.features.filings.report import GRACE_DAYS
-from corkathon_api.features.filings.routes import require_access
 from corkathon_api.features.radar.prospects import CORK_CITY_KEYS, CORK_COUNTY_KEYS, LIMIT, Row
 from corkathon_api.features.radar.service import RadarService
 from corkathon_api.request_body import parse_json_body
@@ -118,7 +119,6 @@ def snapshot_info(newest: date | None, today: date) -> dict[str, object]:
 @radar_routes.post("/ask")
 @jwt_required()
 def ask() -> Response:
-    require_access()
     body = parse_json_body(AskBody)
     if body.preset is None:
         raise AppError(
@@ -132,7 +132,11 @@ def ask() -> Response:
 
     today = service().filings.today()
     scan = service().today_scan()
-    rows: list[Row] = getattr(scan, str(preset["list"]))
+    name = str(preset["list"])
+    source = scan
+    if name.startswith("clients_"):
+        source = service().client_scan(client_numbers(signed_in_user().id))
+    rows: list[Row] = getattr(source, name)
     return jsonify(
         {
             "kind": "answer",

@@ -1,5 +1,6 @@
 import { IconCopy, IconPhoneCall, IconRefresh } from '@tabler/icons-react'
 import { useState } from 'react'
+import { Link } from 'react-router'
 import { GlowingEffect } from '#src/components/ui/glowing-effect'
 import { cn } from '#src/lib/cn'
 import { FilingsTable } from '#src/features/filings/FilingsTable.tsx'
@@ -192,8 +193,8 @@ function ReportBody({ report, briefing }: ReportBodyProps) {
   if (report.companies.length === 0) {
     return (
       <p className="inset px-4 py-3 text-graphite">
-        No clients in the report yet. Add company numbers to my_companies.csv on the filings server,
-        then rebuild the report.
+        No clients in the report yet. <Link to="/app/clients">Add your clients</Link> by company
+        number or CSV, and they will show up here.
       </p>
     )
   }
@@ -217,8 +218,7 @@ function ReportBody({ report, briefing }: ReportBodyProps) {
         <div className="flex flex-col gap-4">
           <BriefingCard briefing={briefing} />
           <p className="text-label text-graphite">
-            Your client list is my_companies.csv on the filings server. Edit it, then rebuild the
-            report.
+            <Link to="/app/clients">Manage your client list</Link> to change who appears here.
           </p>
         </div>
       </div>

@@ -5,6 +5,8 @@ from flask import Flask
 from flask.testing import FlaskClient
 
 from conftest import PASSWORD, csrf_headers, sign_up
+from corkathon_api.features.auth.access import AccessList
+from corkathon_api.settings import Settings
 
 
 def test_register_signs_the_user_in(client: FlaskClient) -> None:
@@ -102,19 +104,22 @@ def test_session_cookie_is_httponly_and_strict(client: FlaskClient) -> None:
 
 
 def test_production_cookies_are_secure(build_app: Callable[..., Flask]) -> None:
-    client = build_app(app_env="production").test_client()
+    client = build_app(app_env="production", allowed_emails="ada@example.com").test_client()
     response = client.post(
         "/api/auth/register",
         json={"email": "ada@example.com", "password": PASSWORD},
         base_url="https://localhost",
     )
+    assert response.status_code == 201
     assert all("Secure" in cookie for cookie in response.headers.getlist("Set-Cookie"))
 
 
 def test_cookie_secure_false_lets_an_http_deploy_keep_the_session(
     build_app: Callable[..., Flask],
 ) -> None:
-    client = build_app(app_env="production", cookie_secure=False).test_client()
+    client = build_app(
+        app_env="production", cookie_secure=False, allowed_emails="ada@example.com"
+    ).test_client()
     response = client.post(
         "/api/auth/register", json={"email": "ada@example.com", "password": PASSWORD}
     )
@@ -182,3 +187,64 @@ def test_rotating_addresses_against_one_email_is_still_limited(
     client = build_app(auth_rate_limit_per_minute=2).test_client()
     statuses = [login_from(client, f"10.0.0.{n}", "wrong") for n in range(11)]
     assert statuses == [401] * 10 + [429]
+
+
+def register(client: FlaskClient, email: str) -> int:
+    return client.post(
+        "/api/auth/register", json={"email": email, "password": PASSWORD}
+    ).status_code
+
+
+def test_a_listed_email_can_sign_up_and_back_in(build_app: Callable[..., Flask]) -> None:
+    client = build_app(allowed_emails="Ada@Example.com, grace@example.com").test_client()
+    assert register(client, "ada@example.com") == 201
+    client.post("/api/auth/logout", headers=csrf_headers(client))
+    response = client.post(
+        "/api/auth/login", json={"email": "ada@example.com", "password": PASSWORD}
+    )
+    assert response.status_code == 200
+
+
+def test_an_email_off_the_list_cannot_sign_up(build_app: Callable[..., Flask]) -> None:
+    client = build_app(allowed_emails="ada@example.com").test_client()
+    response = client.post(
+        "/api/auth/register", json={"email": "stranger@example.com", "password": PASSWORD}
+    )
+    assert response.status_code == 403
+    assert response.json is not None
+    assert response.json["error"]["code"] == "email_not_allowed"
+    assert client.get_cookie("access_token_cookie") is None
+
+
+def test_a_domain_entry_lets_the_whole_firm_in(build_app: Callable[..., Flask]) -> None:
+    client = build_app(allowed_emails="@frame.ie").test_client()
+    assert register(client, "anyone@frame.ie") == 201
+    assert register(client, "anyone@notframe.ie") == 403
+    assert register(client, "frame.ie@evil.example") == 403
+
+
+def test_production_with_no_list_lets_nobody_in(build_app: Callable[..., Flask]) -> None:
+    client = build_app(app_env="production", cookie_secure=False).test_client()
+    assert register(client, "ada@example.com") == 403
+
+
+def test_an_email_taken_off_the_list_cannot_sign_in(build_app: Callable[..., Flask]) -> None:
+    app = build_app(allowed_emails="ada@example.com")
+    client = app.test_client()
+    sign_up(client, "ada@example.com")
+    app.extensions["access_list"] = AccessList.parse("grace@example.com", open_when_empty=False)
+    assert client.get("/api/auth/me").status_code == 401
+    right = client.post("/api/auth/login", json={"email": "ada@example.com", "password": PASSWORD})
+    assert right.status_code == 403
+    assert right.json is not None
+    assert right.json["error"]["code"] == "email_not_allowed"
+    # a wrong password says nothing about whether the email is on the list
+    wrong = client.post("/api/auth/login", json={"email": "ada@example.com", "password": "nope"})
+    assert wrong.status_code == 401
+
+
+def test_the_old_filings_setting_still_fills_the_list(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("FILINGS_ALLOWED_EMAILS", "ada@example.com")
+    monkeypatch.delenv("ALLOWED_EMAILS", raising=False)
+    settings = Settings(_env_file=None, jwt_secret_key="x" * 32)
+    assert settings.allowed_emails == "ada@example.com"

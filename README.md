@@ -16,12 +16,12 @@ Dialed-In tells an accountant, on a web page or their phone, which companies are
 | Feature | Status |
 |---|---|
 | Sign-in with HttpOnly cookie sessions, CSRF and rate limits | Built |
-| **Today page**: overdue and due-soon companies from the daily CRO snapshot for a shared client list | Built |
+| **Today page**: overdue and due-soon companies from the daily CRO snapshot for the account's own clients | Built |
 | **Filing deadlines page**: stored questions (overdue clients, due this week, prospects by area and sector), each showing the filter, row count and snapshot date | Built |
 | **Phone, CRO Tracker**: dial `100`, press `1` twice, ask a question on a DECT handset, hear an answer pre-rendered with Piper from the cro-tracker report | Built (`infra/phone`, `infra/asterisk`) |
 | **Morning review call**: the phone rings and reads the day's overdue and due companies | Built (`infra/phone/morning_review.py`) |
 | Free-text questions answered by Claude turned into a checked filter | Planned. The API returns `503 radar_llm_unavailable` and the page offers the stored questions |
-| Per-user client lists (`/api/radar/clients`) | Planned. Today the client list is one shared file, protected by `FILINGS_ALLOWED_EMAILS` |
+| **Clients page**: each account adds its own companies by number or CSV upload (`/api/clients`), seen only by that account | Built |
 
 ## Quickstart
 
@@ -51,7 +51,7 @@ The site is one container serving the API and the built front end. Set at least:
 |---|---|
 | `JWT_SECRET_KEY` | Output of `openssl rand -hex 32` |
 | `TRUSTED_PROXIES` | `1` behind one reverse proxy, so rate limits see the real client address |
-| `FILINGS_ALLOWED_EMAILS` | Comma-separated accounts allowed to read the client report. **Set this before loading a real client list**, since sign-up is open |
+| `ALLOWED_EMAILS` | Comma-separated emails or `@domain` entries that may create an account and sign in. **Production lets nobody in until this is set.** Development with it empty lets anyone sign up |
 
 Serve it over HTTPS: session cookies are `Secure` in production. Data lives on the `/data` volume. Full detail in [docs/scaffold.md](docs/scaffold.md#deploy) and [docs/api-contract.md](docs/api-contract.md).
 

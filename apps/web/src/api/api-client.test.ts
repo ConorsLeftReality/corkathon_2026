@@ -39,6 +39,16 @@ describe('createApiClient', () => {
     expect(calls[0]?.init.body).toBe('{"body":"hi"}')
   })
 
+  it('sends a form as multipart with the csrf header and no json type', async () => {
+    const { request, calls } = client(Response.json({ id: 1 }), 'csrf_access_token=abc123')
+    const form = new FormData()
+    form.set('mode', 'add')
+    await request('/api/clients/upload', noteSchema, { method: 'POST', body: form })
+    expect(headersOf(calls[0]).get('X-CSRF-TOKEN')).toBe('abc123')
+    expect(headersOf(calls[0]).has('Content-Type')).toBe(false)
+    expect(calls[0]?.init.body).toBe(form)
+  })
+
   it('leaves the csrf header off reads', async () => {
     const { request, calls } = client(Response.json({ id: 1 }), 'csrf_access_token=abc123')
     await request('/api/notes', noteSchema)

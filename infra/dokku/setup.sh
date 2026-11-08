@@ -36,9 +36,9 @@ has_config corkathon2026 TRUSTED_PROXIES \
 # set COOKIE_SECURE=true yourself once the site is served over https
 has_config corkathon2026 COOKIE_SECURE \
   || dokku config:set --no-restart corkathon2026 COOKIE_SECURE=false
-has_config corkathon2026 FILINGS_ALLOWED_EMAILS \
-  || echo "WARN: set FILINGS_ALLOWED_EMAILS before loading a real client list (sign-up is open):
-      sudo dokku config:set corkathon2026 FILINGS_ALLOWED_EMAILS=you@example.com"
+has_config corkathon2026 ALLOWED_EMAILS || has_config corkathon2026 FILINGS_ALLOWED_EMAILS \
+  || echo "WARN: nobody can sign up or sign in until ALLOWED_EMAILS is set:
+      sudo dokku config:set corkathon2026 ALLOWED_EMAILS=you@example.com,@clientfirm.ie"
 
 app cro-tracker 9001 5000 /app/data
 # it lives in a subfolder of the repo
