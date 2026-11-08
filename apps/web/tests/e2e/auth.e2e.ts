@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { PASSWORD, signUp, uniqueEmail, signedInAs } from './session-steps.ts'
+import { PASSWORD, openInvite, signUp, uniqueEmail, signedInAs } from './session-steps.ts'
 
 test('a new user can create an account, sign out and sign back in', async ({ page }) => {
   const email = await signUp(page)
@@ -26,22 +26,49 @@ test('a wrong password shows an error and stays signed out', async ({ page }) =>
   await expect(page.getByRole('alert')).toHaveText('Email or password is incorrect.')
 })
 
-test('an email off the access list cannot create an account', async ({ page }) => {
+test('without an invite, asking for an account says how to get one', async ({ page }) => {
   await page.goto('/login')
   await page.getByRole('button', { name: 'I need an account' }).click()
-  await page.getByLabel('Email').fill('stranger@not-on-the-list.test')
+  await expect(page.getByRole('status')).toHaveText(
+    'Accounts are by invite only. Ask your admin for an invite link.',
+  )
+  await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible()
+})
+
+test('an invite link only works for the email it was made for', async ({ page }) => {
+  await openInvite(page, uniqueEmail())
+  await page.getByLabel('Email').fill(uniqueEmail())
   await page.getByLabel('Password').fill(PASSWORD)
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page.getByRole('alert')).toHaveText(
-    'This email is not on the access list. Ask your admin to add it.',
+    'This invite link is not valid for that email. Ask your admin for a new one.',
   )
   await expect(page.getByRole('heading', { name: 'Create account' })).toBeVisible()
 })
 
+test('an invite link works once', async ({ page }) => {
+  const email = uniqueEmail()
+  await openInvite(page, email)
+  const link = page.url()
+  await page.getByLabel('Email').fill(email)
+  await page.getByLabel('Password').fill(PASSWORD)
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(signedInAs(page, email)).toBeVisible()
+  await page.getByRole('button', { name: 'Sign out' }).filter({ visible: true }).click()
+
+  await page.goto(link)
+  await page.getByLabel('Email').fill(email)
+  await page.getByLabel('Password').fill(PASSWORD)
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page.getByRole('alert')).toHaveText(
+    'This invite link is not valid for that email. Ask your admin for a new one.',
+  )
+})
+
 test('a short password marks the field invalid', async ({ page }) => {
-  await page.goto('/login')
-  await page.getByRole('button', { name: 'I need an account' }).click()
-  await page.getByLabel('Email').fill(uniqueEmail())
+  const email = uniqueEmail()
+  await openInvite(page, email)
+  await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password').fill('short')
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page.getByLabel('Password')).toHaveAttribute('aria-invalid', 'true')

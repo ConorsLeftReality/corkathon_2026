@@ -17,6 +17,8 @@ class RegisterBody(BaseModel):
     email: Email
     # the cap stops a huge password from tying up a thread in scrypt
     password: str = Field(min_length=8, max_length=128)
+    # the token from the invite link, required unless invites are switched off
+    invite: str | None = Field(default=None, max_length=128)
 
 
 class LoginBody(BaseModel):

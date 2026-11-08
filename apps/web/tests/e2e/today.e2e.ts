@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 import type { Page, Route } from '@playwright/test'
 import { uploadClientCsv } from './clients-steps.ts'
-import { PASSWORD, signUp, uniqueEmail } from './session-steps.ts'
+import { PASSWORD, openInvite, signUp, uniqueEmail } from './session-steps.ts'
 
 // stubs the filings api, in the shape its report.json takes
 
@@ -224,9 +224,9 @@ test('a lost session on today returns to sign in', async ({ page }) => {
   await page.route('**/api/report', (route) =>
     json(route, { error: { code: 'unauthorized', message: 'Sign in again.' } }, 401),
   )
-  await page.goto('/login')
-  await page.getByRole('button', { name: 'I need an account' }).click()
-  await page.getByLabel('Email').fill(uniqueEmail())
+  const email = uniqueEmail()
+  await openInvite(page, email)
+  await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password').fill(PASSWORD)
   await page.getByRole('button', { name: 'Create account' }).click()
   // today loads, gets the 401, and hands back to sign in

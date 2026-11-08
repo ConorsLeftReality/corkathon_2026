@@ -1,4 +1,4 @@
-import { Link, Navigate, useLocation } from 'react-router'
+import { Link, Navigate, useLocation, useSearchParams } from 'react-router'
 import { assertNever } from '#src/assert-never.ts'
 import { redirectTarget } from '#src/features/auth/redirect-target.ts'
 import { useSession } from '#src/features/auth/SessionProvider.tsx'
@@ -8,6 +8,8 @@ import { SignInForm } from '#src/features/auth/SignInForm.tsx'
 export function LoginPage() {
   const { state, onSignedIn } = useSession()
   const saved: unknown = useLocation().state
+  // the one-time token from an invite link, /login?invite=...
+  const invite = useSearchParams()[0].get('invite')
 
   switch (state.status) {
     case 'loading':
@@ -23,7 +25,7 @@ export function LoginPage() {
               Dialed-In
             </Link>
           </h1>
-          <SignInForm onSignedIn={onSignedIn} />
+          <SignInForm onSignedIn={onSignedIn} invite={invite} />
         </main>
       )
     default:

@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { expect } from '@playwright/test'
 import type { Page } from '@playwright/test'
+import { invitePath } from './server-env.ts'
 
 export const PASSWORD = 'correct horse battery'
 
@@ -16,10 +17,15 @@ export function signedInAs(page: Page, email: string) {
     .filter({ visible: true })
 }
 
+// opens a fresh invite link, which lands on the create account form
+export async function openInvite(page: Page, email: string): Promise<void> {
+  await page.goto(invitePath(email))
+  await expect(page.getByRole('heading', { name: 'Create account' })).toBeVisible()
+}
+
 export async function signUp(page: Page): Promise<string> {
   const email = uniqueEmail()
-  await page.goto('/login')
-  await page.getByRole('button', { name: 'I need an account' }).click()
+  await openInvite(page, email)
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password').fill(PASSWORD)
   await page.getByRole('button', { name: 'Create account' }).click()
