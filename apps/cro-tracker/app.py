@@ -348,14 +348,22 @@ def print_table(report):
 app = Flask(__name__)
 
 
+# without a token the api refuses everything, unless a laptop run opts in with ALLOW_NO_TOKEN=1
+ALLOW_NO_TOKEN = os.environ.get("ALLOW_NO_TOKEN", "") == "1"
 if not API_TOKEN:
-    app.logger.warning("API_TOKEN is not set: anyone who can reach this API can read every client list")
+    app.logger.warning("API_TOKEN is not set: every route except /api/health returns 503"
+                       if not ALLOW_NO_TOKEN else
+                       "API_TOKEN is not set and ALLOW_NO_TOKEN=1: anyone who can reach this API can read every client list")
 
 
 @app.before_request
 def require_token():
-    if not API_TOKEN or request.method == "OPTIONS" or request.path == "/api/health":
+    if request.method == "OPTIONS" or request.path == "/api/health":
         return None
+    if not API_TOKEN:
+        if ALLOW_NO_TOKEN:
+            return None
+        return jsonify({"error": "API_TOKEN is not set on the server"}), 503
     header = request.headers.get("Authorization", "")
     given = header[len("Bearer "):] if header.startswith("Bearer ") else ""
     if not hmac.compare_digest(given.encode(), API_TOKEN.encode()):
