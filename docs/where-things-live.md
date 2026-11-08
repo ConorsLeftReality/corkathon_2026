@@ -61,5 +61,5 @@ Both apps are deployed only by GitHub Actions on a push to `main`. The Pi keeps 
 | `/etc/systemd/system/docker-builder-prune.timer` | Installed by Dokku. Clears the Docker build cache at 04:05 so the SD card does not fill |
 | `/etc/dphys-swapfile`, `/var/swap` | 2 GB of swap, so Docker builds are not killed on 906 MiB of RAM |
 | `/etc/NetworkManager/dnsmasq-shared.d/` | `dect.conf` pins the DECT base to `10.99.99.200`; `log.conf` logs DHCP. Written by `infra/pi/network.sh` |
-| `/etc/sysctl.d/99-tailscale.conf` | IP forwarding, so the tailnet can reach the phone LAN through the Pi |
+| `/etc/sysctl.d/99-tailscale.conf` | IP forwarding, so the tailnet can reach the phone LAN through the Pi and use it as an exit node |
 | `/srv/archive/2026-11-08/` | Old files moved aside during the 2026-11-08 tidy-up, with a `README.txt`. Nothing uses them; delete once you are sure |
