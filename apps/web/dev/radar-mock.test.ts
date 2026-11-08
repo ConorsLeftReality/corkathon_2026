@@ -75,7 +75,7 @@ describe('radar mock', () => {
 })
 
 describe('filings mock', () => {
-  it('serves a report in the shape matteo/app.py writes', () => {
+  it('serves a report in the shape the filings api returns', () => {
     const reply = createRadarMock().handle('GET', '/api/report', undefined)
     expect(reportSchema.safeParse(reply?.body).success).toBe(true)
   })

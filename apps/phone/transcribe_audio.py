@@ -8,7 +8,7 @@ Called by Asterisk:
 Called by cron (every hour, see deploy_option3.sh):
     /usr/bin/python3 /opt/filing-radar/transcribe_audio.py --pregenerate [client ...]
 
-1. Speech-to-text on the caller's WAV  (SpeechRecognition + Google, like prova.py)
+1. Speech-to-text on the caller's WAV  (SpeechRecognition + Google)
 2. Answer from the same CRO report the dashboard uses. With REPORT_URL set
    (e.g. http://127.0.0.1:9001/api/{client}/report) it asks the tracker API;
    otherwise it reads REPORT_PATH. {client} is the 3rd argument, or
@@ -44,6 +44,7 @@ DEFAULTS = {
     "REPORT_PATH": os.path.join(BASE, "report.json"),
     "REPORT_URL": "",            # e.g. http://127.0.0.1:9001/api/{client}/report (wins over REPORT_PATH)
     "DEFAULT_CLIENT": "",        # client used when Asterisk doesn't pass one
+    "API_TOKEN": "",             # cro-tracker's API_TOKEN, sent as a bearer token to REPORT_URL
     "FFMPEG": "/usr/bin/ffmpeg",
     "PIPER": "/usr/local/bin/piper",
     "PIPER_VOICE": "/opt/piper-voices/en_GB-alan-low.onnx",
@@ -70,6 +71,7 @@ PREGEN_QUESTIONS = ("give me a summary", "which companies are overdue", "what is
 CLIENT_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
 
 T0 = time.time()
+_API_TOKEN = ""  # set by load_env, read by read_report
 
 
 def log(*args):
@@ -89,6 +91,8 @@ def load_env(path=ENV_FILE):
                 cfg[k.strip()] = v.strip().strip('"').strip("'")
     except OSError:
         pass
+    global _API_TOKEN
+    _API_TOKEN = cfg.get("API_TOKEN", "")
     return cfg
 
 
@@ -247,7 +251,10 @@ def report_source(cfg, client=""):
 def read_report(source, timeout=REPORT_URL_TIMEOUT_S):
     if source.startswith(("http://", "https://")):
         import urllib.request
-        req = urllib.request.Request(source, headers={"User-Agent": "filing-radar-phone/1.0"})
+        headers = {"User-Agent": "filing-radar-phone/1.0"}
+        if _API_TOKEN:
+            headers["Authorization"] = f"Bearer {_API_TOKEN}"
+        req = urllib.request.Request(source, headers=headers)
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return json.load(r)
     with open(source) as f:
@@ -446,7 +453,7 @@ def answer(question, companies, today):
 
 # ------------------------------------------------------------ audio I/O
 def transcribe(path, lang):
-    import speech_recognition as sr          # same library as prova.py
+    import speech_recognition as sr
     r = sr.Recognizer()
     r.operation_timeout = STT_TIMEOUT_S
     with sr.AudioFile(path) as source:      # file instead of sr.Microphone()
@@ -475,7 +482,7 @@ def cache_file(cfg, text):
 
 
 def synthesize(cfg, text, out_wav):
-    """Copy the pre-rendered clip for this reply; never runs gTTS."""
+    """Copy the pre-rendered clip for this reply, never renders live."""
     cached = cache_file(cfg, text)
     if os.path.exists(cached):
         shutil.copyfile(cached, out_wav)

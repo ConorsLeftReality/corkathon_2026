@@ -1,6 +1,6 @@
 # Data
 
-Everything on this page is **Planned**. Column names and rule figures are taken from the plan and must be checked against the real file and cro.ie before the demo. Each unchecked item carries a VERIFY marker.
+Everything on this page is **Planned**. Column names and rule figures are taken from the plan and must be checked against the real file and cro.ie before they are relied on. Each unchecked item carries a VERIFY marker.
 
 ## Source
 
@@ -23,7 +23,7 @@ Optional second source: the CRO **Financial Statements** dataset (submission dat
 
 ## Attribution
 
-Shown in the web footer, the README and the Devpost page:
+Shown in the web footer and the README:
 
 > Contains Companies Registration Office data, licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Source: CRO Open Data Portal, Company Records dataset, snapshot of {snapshot date}.
 
@@ -198,4 +198,4 @@ Companies with no usable Eircode get `routing_key = NULL` and never match an are
 | Blank NACE codes | Company drops out of sector filters | `princ_object_code` fallback, planned |
 | Unparseable dates | `NULL` after `TRY_CAST` | Row excluded from deadline maths, count logged by `load.py` |
 | Penalty is our estimate from public rules | Not a bill | Always worded "about" and "estimated" |
-| Registered office address only | No director or personal data | By design, see [09-judge-qa.md](09-judge-qa.md) |
+| Registered office address only | No director or personal data | By design |

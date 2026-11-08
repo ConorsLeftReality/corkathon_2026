@@ -6,7 +6,7 @@ from corkathon_api.features.auth.session import signed_in_user
 from corkathon_api.features.filings.report import Company
 from corkathon_api.features.filings.service import FilingsService
 
-# same paths and json as matteo/app.py, so the web app works against either
+# same paths and json shape as the standalone cro-tracker, so the web client reads either
 filings_routes = Blueprint("filings", __name__, url_prefix="/api")
 
 

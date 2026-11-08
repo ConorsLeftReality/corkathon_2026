@@ -1,29 +1,8 @@
 # Telephony
 
-## Built for the demo
-
-| Piece | State |
-|---|---|
-| Desk phone | Set up and plays audio |
-| Spoken answer | **Pre-recorded** from hardcoded data. The presenter asks a question out loud, then presses a button on the phone and the recording plays. Nothing listens to the question |
-| Personal work phone | Plays the same recording from a mobile, to show the channel is not tied to a landline |
-| Everything below this section | Planned |
-
-Placeholder: how the button plays the recording (phone model, where the audio file lives, how it was made), so a teammate can rebuild it.
-
-On stage, say the answer is pre-recorded. See [07-demo-and-pitch.md](07-demo-and-pitch.md).
-
 ## The live design (Planned)
 
-Everything from here down is **Planned**. Config blocks are the files we intend to commit under `telephony/`; none exist yet.
-
-## Team deadlines
-
-| Time | Must be true | If not |
-|---|---|---|
-| 11:30 | Phone registered to Asterisk, test sound plays on ext 100 | Switch to the Linphone fallback (branch c) and stop working on the desk phone |
-| 14:30 | Options 1 and 2 read real data from DuckDB | Cut option 3 and the morning briefing; demo options 1 and 2 only |
-| 16:00 | Feature freeze | Voice questions (option 3) stay in only if they have worked 5 times in a row |
+The phone path that ships today is in [apps/phone](../apps/phone/README.md): speech to text, then answers pre-rendered with Piper from the cro-tracker report. Everything below is the fuller design and is **Planned**. Config blocks are the files we intend to commit under `telephony/`; none exist yet.
 
 ## Numbers on the phone
 
@@ -31,7 +10,7 @@ Everything from here down is **Planned**. Config blocks are the files we intend 
 |---|---|
 | `201` | The desk phone's own SIP account |
 | `100` | Dialed In menu |
-| `199` | Books a morning briefing call in 10 seconds (for the stage) |
+| `199` | Books a morning briefing call in 10 seconds (for testing) |
 
 The plan said "endpoint for ext 100". The phone cannot be both the caller and the number it dials, so the phone registers as `201` and `100` is a dialplan extension.
 
@@ -176,8 +155,6 @@ These phones speak SCCP out of the box. To register them with Asterisk they need
 2. Connect it to the Pi's network: laptop on the switch, or a phone through a USB ethernet adapter.
 3. Add a SIP account: username `201`, domain `10.10.0.1`, password from `pjsip.secrets.conf`, transport UDP.
 4. Dial `100`.
-
-On stage, the laptop's audio goes to the lectern mic instead of the desk phone's speaker. The demo is the same.
 
 ## Asterisk config
 
@@ -438,7 +415,7 @@ crontab -e
 30 8 * * 1-5 cd /home/pi/corkathon2026/telephony && docker compose exec -T asterisk /opt/radar/place_briefing.sh 0
 ```
 
-### Live on stage
+### On demand
 
 - **Dial `199`** on the desk phone, hear "Your briefing call is on its way", hang up. The phone rings 10 seconds later.
 - Or from a laptop on the switch:

@@ -2,7 +2,7 @@
 
 ## What Dialed In cannot do
 
-These apply to the planned design. They are said out loud in the demo and shown in the product.
+These apply to the planned design. They are shown in the product.
 
 | Limit | Why | How the product shows it |
 |---|---|---|

@@ -4,7 +4,7 @@ Two APIs feed the web app.
 
 ## Filings API (built)
 
-The Today screen at `/app` reads this one. It runs inside the main Flask app (`apps/api/corkathon_api/features/filings/`), so it ships in the one deployed container and every route needs a signed-in session. The report logic is ported from Matteo's `matteo/app.py`, which still runs on its own for the phone and ElevenLabs work.
+The Today screen at `/app` reads this one. It runs inside the main Flask app (`apps/api/corkathon_api/features/filings/`), so it ships in the one deployed container and every route needs a signed-in session.
 
 | Setting | Default | What it does |
 |---|---|---|
@@ -15,52 +15,24 @@ The Today screen at `/app` reads this one. It runs inside the main Flask app (`a
 
 Sign-up is open and the client list is shared, so **set `FILINGS_ALLOWED_EMAILS` before you put a real `my_companies.csv` on the server**. Without it, anyone who creates an account can read the list. The app logs a warning at start-up when a client list exists and no allowlist is set. Leaving it unset is fine while the demo list of public companies is in use.
 
-Sign-up does not check that people own the email they register, so an allowlisted address counts for whoever registers it first. Have every allowed person create their account **before** you set the list; after that an impostor cannot take the address, because emails are unique. Email verification or admin-granted access would close this properly. On the Pi: `dokku config:set corkathon2026 FILINGS_ALLOWED_EMAILS=you@example.com,teammate@example.com`.
+Sign-up does not check that people own the email they register, so an allowlisted address counts for whoever registers it first. Have every allowed person create their account **before** you set the list; after that an impostor cannot take the address, because emails are unique. Email verification or admin-granted access would close this properly. On the Pi: `dokku config:set corkathon2026 FILINGS_ALLOWED_EMAILS=alice@example.com,bob@example.com`.
 
-Without a `my_companies.csv` in the data folder, the report uses Matteo's demo list (Ryanair, Kerry Group, CRH and one fake number). On the first request of the day the app downloads the CRO snapshot (about 47 MB) in the background and answers `503 filings_building` until it is ready; the page shows that message with a retry button. To use your own list on the Pi, copy it into the app's `/data/filings/` volume and press Rebuild report.
-
-The rest of this section describes `matteo/app.py` running on its own, which the web app only uses when Vite is started with `FILINGS_API_URL`.
+Without a `my_companies.csv` in the data folder, the report uses a demo list of public companies (Ryanair, Kerry Group, CRH and one fake number). On the first request of the day the app downloads the CRO snapshot (about 47 MB) in the background and answers `503 filings_building` until it is ready; the page shows that message with a retry button. To use your own list on the Pi, copy it into the app's `/data/filings/` volume and press Rebuild report.
 
 | Route | Returns | Used by |
 |---|---|---|
 | `GET /api/report` | `{generated_at, as_of, window_days, grace_days, counts, companies, source}`, optional `?status=due,overdue` | Today screen: tiles, overdue and due tables |
 | `GET /api/companies` | the sorted `companies` list only | not used yet |
-| `GET /api/briefing` | plain text for ElevenLabs | Today screen: "What the phone reads" |
+| `GET /api/briefing` | plain text for the phone | Today screen: "What the phone reads" |
 | `POST /api/refresh` | the rebuilt report | Today screen: "Rebuild report" |
 
-The zod schema for the report is `reportSchema` in `apps/web/src/features/filings/filings-api.ts`. Each company has `company_num`, `company_name`, `company_status`, `company_type`, `address`, `last_ar_date`, `nard`, `deadline`, `days_left` (negative when overdue) and `status` (`overdue`, `due`, `ok`, `unknown`, `dissolved` or `not_found`). Errors come back as `{"error": {"code": ..., "message": ...}}` from the main app and `{"error": "..."}` from the standalone one; the page shows the message either way.
+The zod schema for the report is `reportSchema` in `apps/web/src/features/filings/filings-api.ts`. Each company has `company_num`, `company_name`, `company_status`, `company_type`, `address`, `last_ar_date`, `nard`, `deadline`, `days_left` (negative when overdue) and `status` (`overdue`, `due`, `ok`, `unknown`, `dissolved` or `not_found`). Errors come back as `{"error": {"code": ..., "message": ...}}`; the page shows the message.
 
-Standalone, the client list is `my_companies.csv` beside `matteo/app.py`, shared by everyone, with no sign-in.
+The separate multi-client tracker the phone reads from is `apps/cro-tracker`, documented in [its DEPLOY.md](../apps/cro-tracker/DEPLOY.md).
 
-To run it standalone beside the web app:
+## Radar API (partly built)
 
-```bash
-uv run --with flask==3.1.3 python matteo/app.py serve
-FILINGS_API_URL=http://127.0.0.1:5000 bun run dev
-```
-
-With `FILINGS_API_URL=http://127.0.0.1:5000` set, Vite sends `/api/report`, `/api/companies`, `/api/briefing` and `/api/refresh` to it and everything else under `/api` to the scaffold Flask app on 5001. Without it, all of `/api` goes to the scaffold. `bun run dev:mock` answers all of them with placeholder data instead.
-
-The filings app guards itself:
-
-| Setting | Default | What it does |
-|---|---|---|
-| `HOST` | `127.0.0.1` | Where it listens. Anything else needs `FILINGS_TOKEN`, or it refuses to start |
-| `ALLOWED_HOSTS` | `127.0.0.1:<port>,localhost:<port>` | Requests naming any other host get a 403, which stops DNS rebinding. Add the address another device uses, for example `192.168.1.20:5000` |
-| `FILINGS_TOKEN` | not set | When set, every request needs an `X-Filings-Token` header with this value. Start Vite with the same `FILINGS_TOKEN` and the proxy adds it |
-| `ALLOWED_ORIGIN` | not set | Sends a CORS header for that origin only. The web app does not need it, since it goes through the proxy |
-
-To let the phone or another device fetch the briefing:
-
-```bash
-HOST=0.0.0.0 ALLOWED_HOSTS=192.168.1.20:5000 FILINGS_TOKEN=<long random value> uv run --with flask==3.1.3 python matteo/app.py serve
-```
-
-The device then sends `X-Filings-Token: <the same value>`. Generate the value with `openssl rand -hex 16` and keep it out of git.
-
-## Radar API (Planned)
-
-The Filing deadlines page at `/app/radar` (prospects search, stored questions, typed questions) needs this one, and it is not built. Until it is, that page only works under `bun run dev:mock`. The rest of this page is the contract for it.
+The Filing deadlines page at `/app/radar` reads this one. `POST /api/radar/ask` with a stored question (preset) is built and is the only route the page calls. Free-text questions answer `503 radar_llm_unavailable`, and the `snapshot` and `clients` routes below are not built yet. The rest of this page is the contract.
 
 The source of truth is the zod schemas in `apps/web/src/features/radar/radar-api.ts`. This page restates them in Python.
 
@@ -72,7 +44,7 @@ With your Flask app running (`bun run dev:api`), in a second terminal:
 bun run radar:contract
 ```
 
-It signs up a throwaway user, calls every route, and prints `ok` or `FAIL` with the field that is wrong. It also checks that a second user cannot see the first user's client list, and that a request with no session gets a 401. Every line should say `ok` before the demo. The turnover check only warns, since free-text questions are optional.
+It signs up a throwaway user, calls every route, and prints `ok` or `FAIL` with the field that is wrong. It also checks that a second user cannot see the first user's client list, and that a request with no session gets a 401. Every line should say `ok` before a release. The turnover check only warns, since free-text questions are optional.
 
 To see your data in the real page, run `bun run dev` (not `dev:mock`) and open http://localhost:5173.
 
@@ -232,4 +204,4 @@ The page reads that code and offers the four stored questions instead, which sti
 
 ### Being honest in "How this was worked out"
 
-The page shows `filter`, `sql` and `params` under "The filter the AI chose" and "The query that ran". Put in exactly what your code ran. If you sort with pandas instead of SQL, put the pandas expression in `sql`. Do not write SQL that never ran: judges will ask how it works, and this panel is the answer.
+The page shows `filter`, `sql` and `params` under "The filter the AI chose" and "The query that ran". Put in exactly what your code ran. If you sort with pandas instead of SQL, put the pandas expression in `sql`. Do not write SQL that never ran: users rely on this panel to see how the answer was reached.

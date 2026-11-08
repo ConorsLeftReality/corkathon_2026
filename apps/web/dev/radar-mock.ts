@@ -286,7 +286,7 @@ function ask(body: unknown): Reply {
   )
 }
 
-// the shape matteo/app.py writes to report.json
+// the report shape the filings api returns
 function filingCompany(
   num: string,
   name: string,

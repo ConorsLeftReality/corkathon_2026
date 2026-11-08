@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { ApiError } from '#src/api/api-client.ts'
 
-// served by the filings feature in apps/api, or by matteo/app.py when vite proxies to it
+// served by the filings feature in apps/api
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
 
@@ -42,7 +42,7 @@ export const reportSchema = z.object({
 export type FilingCompany = z.infer<typeof companySchema>
 export type FilingReport = z.infer<typeof reportSchema>
 
-// apps/api sends { error: { code, message } }, matteo/app.py sends { error: message }
+// apps/api sends { error: { code, message } }, older servers send { error: message }
 const errorBody = z.object({
   error: z.union([z.object({ code: z.string(), message: z.string() }), z.string()]),
 })

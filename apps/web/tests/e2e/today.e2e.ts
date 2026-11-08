@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 import type { Page, Route } from '@playwright/test'
 import { PASSWORD, signUp, uniqueEmail } from './session-steps.ts'
 
-// stubs matteo/app.py, the filings api, in the shape its report.json takes
+// stubs the filings api, in the shape its report.json takes
 
 function company(num: string, name: string, status: string, daysLeft: number | null) {
   return {

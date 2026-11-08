@@ -144,24 +144,8 @@ docker compose -f telephony/compose.yml exec asterisk asterisk -rx "pjsip show c
 | One-way audio | RTP going to the wrong address | Keep `direct_media=no`, `rtp_symmetric=yes`, `rewrite_contact=yes`; container must use `network_mode: host`; check `rtp.conf` ports are not blocked by a firewall on the Pi |
 | Menu plays, option 1 or 2 is silent | FastAGI service not running, or reply path not shared | Is `phone_agi` running on port 4573? Does `/srv/radar/audio/out` exist on the host and in the container? |
 | Option 3 always says "sorry" | Speech to text or Claude failing or too slow | Check the `phone_agi` log for the step that timed out; test whisper on a recording by hand; check `ANTHROPIC_API_KEY` and wifi |
-| Web says data is stale | CRO file older than `RADAR_STALE_DAYS`, or old local copy | `bun run radar:fetch` then `bun run radar:check`. If the CRO file itself is old, say so in the demo: the banner is the honesty feature working |
+| Web says data is stale | CRO file older than `RADAR_STALE_DAYS`, or old local copy | `bun run radar:fetch` then `bun run radar:check`. If the CRO file itself is old, the banner is expected: it is telling users the truth |
 | Web answer: "Questions are unavailable right now" (`radar_llm_unavailable`) | Claude API timeout, wrong key, or no internet | Check `.env` and network; use the example question buttons, which run stored filters without Claude |
 | `radar_data_missing` | `radar.duckdb` not built | `bun run radar:fetch` |
 | Briefing call never rings | Call file not picked up, or wrong channel | `docker compose exec asterisk ls /var/spool/asterisk/outgoing`; `asterisk -rx "pjsip show contacts"`; check the log for `PJSIP/201` |
 
-## Pre-demo checklist
-
-Run through this at 18:45, and again in the room before going on.
-
-- [ ] `bun run radar:check` passes on the laptop; note the snapshot date for the pitch
-- [ ] `RADAR_AS_OF` unset (or set on purpose, and the pitch says so)
-- [ ] Laptop: `bun run start` running, signed in, `/app/radar` open, Prospects mode selected
-- [ ] Test questions 3 and 1 from [04-question-engine.md](04-question-engine.md#test-questions) answered once on the laptop (warms the API)
-- [ ] Pi: on power, `phone_agi` running in tmux, `pjsip show contacts` shows `201 Avail`
-- [ ] Dialled 100: options 1 and 2 play real data
-- [ ] Dialled 199: phone rang
-- [ ] Option 3 tried once (only if it passed the 16:00 freeze)
-- [ ] Phone speaker volume at maximum, handset off hook ready for speakerphone
-- [ ] Backup screen recording on the laptop desktop, opened once to check it plays
-- [ ] Screenshots of cached demo answers in a folder, in case the API is down
-- [ ] Laptop on mains power, notifications off, browser zoom at 125 percent
