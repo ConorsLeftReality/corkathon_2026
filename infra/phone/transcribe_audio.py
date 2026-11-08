@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Filing Radar - phone option 3 (ask a question).
+Dialed-In CRO Tracker - phone option 3 (ask a question).
 
 Called by Asterisk:
-    /usr/bin/python3 /opt/filing-radar/transcribe_audio.py <input.wav> <output_path> [client]
+    /usr/bin/python3 /opt/dialed-in/transcribe_audio.py <input.wav> <output_path> [client]
 
 Called by cron (every hour, see deploy_option3.sh):
-    /usr/bin/python3 /opt/filing-radar/transcribe_audio.py --pregenerate [client ...]
+    /usr/bin/python3 /opt/dialed-in/transcribe_audio.py --pregenerate [client ...]
 
 1. Speech-to-text on the caller's WAV  (SpeechRecognition + Google)
 2. Answer from the same CRO report the dashboard uses. With REPORT_URL set
@@ -38,7 +38,7 @@ import time
 import traceback
 
 # ---------------------------------------------------------------- settings
-BASE = "/opt/filing-radar"
+BASE = "/opt/dialed-in"
 ENV_FILE = os.path.join(BASE, ".env")
 DEFAULTS = {
     "REPORT_PATH": os.path.join(BASE, "report.json"),
@@ -48,7 +48,7 @@ DEFAULTS = {
     "FFMPEG": "/usr/bin/ffmpeg",
     "PIPER": "/usr/local/bin/piper",
     "PIPER_VOICE": "/opt/piper-voices/en_GB-alan-low.onnx",
-    "TTS_CACHE": "/var/spool/asterisk/radar/tts-cache",  # pre-rendered answers
+    "TTS_CACHE": "/var/spool/asterisk/dialed-in/tts-cache",  # pre-rendered answers
     "LIVE_PIPER": "0",           # 1 = try piper live on a cache miss (too slow on the Pi)
     "STT_LANG": "en-IE",
     "WINDOW_DAYS": "30",         # only used if a row has no status
@@ -251,7 +251,7 @@ def report_source(cfg, client=""):
 def read_report(source, timeout=REPORT_URL_TIMEOUT_S):
     if source.startswith(("http://", "https://")):
         import urllib.request
-        headers = {"User-Agent": "filing-radar-phone/1.0"}
+        headers = {"User-Agent": "dialed-in-cro-tracker/1.0"}
         if _API_TOKEN:
             headers["Authorization"] = f"Bearer {_API_TOKEN}"
         req = urllib.request.Request(source, headers=headers)
@@ -492,7 +492,7 @@ def synthesize(cfg, text, out_wav):
     if cfg["LIVE_PIPER"] == "1":
         left = WATCHDOG_S - (time.time() - T0) - 2
         if left > 3:
-            tmpdir = tempfile.mkdtemp(prefix="radar-")
+            tmpdir = tempfile.mkdtemp(prefix="dialed-in-")
             try:
                 raw = os.path.join(tmpdir, "tts.wav")
                 tts_piper(cfg, text, raw, timeout=left - 1)

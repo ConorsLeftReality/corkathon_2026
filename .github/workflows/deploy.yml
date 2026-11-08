@@ -5,7 +5,8 @@ on:
     branches: [main]
     paths-ignore: # changes only inside these do not redeploy the site
       - 'apps/cro-tracker/**'
-      - 'apps/phone/**'
+      - 'infra/**'
+      - 'docs/**'
       - '.github/workflows/deploy-cro-tracker.yml'
   workflow_dispatch: # lets you trigger a deploy manually from the Actions tab
 
