@@ -4,7 +4,7 @@ import pytest
 from flask import Flask
 from flask.testing import FlaskClient
 
-from conftest import PASSWORD, csrf_headers, sign_up
+from conftest import PASSWORD, csrf_headers, invite, register, sign_up
 from corkathon_api.features.auth.access import AccessList
 from corkathon_api.settings import Settings
 
@@ -27,9 +27,7 @@ def test_email_is_case_insensitive(client: FlaskClient) -> None:
 
 def test_register_rejects_a_taken_email(client: FlaskClient) -> None:
     sign_up(client, "ada@example.com")
-    response = client.post(
-        "/api/auth/register", json={"email": "ada@example.com", "password": PASSWORD}
-    )
+    response = register(client, "ada@example.com")
     assert response.status_code == 409
     assert response.json is not None
     assert response.json["error"]["code"] == "email_taken"
@@ -93,9 +91,7 @@ def test_logout_ends_the_session(client: FlaskClient) -> None:
 
 
 def test_session_cookie_is_httponly_and_strict(client: FlaskClient) -> None:
-    response = client.post(
-        "/api/auth/register", json={"email": "ada@example.com", "password": PASSWORD}
-    )
+    response = register(client, "ada@example.com")
     cookie = next(
         c for c in response.headers.getlist("Set-Cookie") if c.startswith("access_token_cookie")
     )
@@ -105,9 +101,10 @@ def test_session_cookie_is_httponly_and_strict(client: FlaskClient) -> None:
 
 def test_production_cookies_are_secure(build_app: Callable[..., Flask]) -> None:
     client = build_app(app_env="production", allowed_emails="ada@example.com").test_client()
+    body = {"email": "ada@example.com", "password": PASSWORD}
     response = client.post(
         "/api/auth/register",
-        json={"email": "ada@example.com", "password": PASSWORD},
+        json={**body, "invite": invite(client, "ada@example.com")},
         base_url="https://localhost",
     )
     assert response.status_code == 201
@@ -120,9 +117,7 @@ def test_cookie_secure_false_lets_an_http_deploy_keep_the_session(
     client = build_app(
         app_env="production", cookie_secure=False, allowed_emails="ada@example.com"
     ).test_client()
-    response = client.post(
-        "/api/auth/register", json={"email": "ada@example.com", "password": PASSWORD}
-    )
+    response = register(client, "ada@example.com")
     assert not any("Secure" in cookie for cookie in response.headers.getlist("Set-Cookie"))
     assert client.get("/api/auth/me").status_code == 200
 
@@ -189,15 +184,13 @@ def test_rotating_addresses_against_one_email_is_still_limited(
     assert statuses == [401] * 10 + [429]
 
 
-def register(client: FlaskClient, email: str) -> int:
-    return client.post(
-        "/api/auth/register", json={"email": email, "password": PASSWORD}
-    ).status_code
+def register_status(client: FlaskClient, email: str) -> int:
+    return register(client, email).status_code
 
 
 def test_a_listed_email_can_sign_up_and_back_in(build_app: Callable[..., Flask]) -> None:
     client = build_app(allowed_emails="Ada@Example.com, grace@example.com").test_client()
-    assert register(client, "ada@example.com") == 201
+    assert register_status(client, "ada@example.com") == 201
     client.post("/api/auth/logout", headers=csrf_headers(client))
     response = client.post(
         "/api/auth/login", json={"email": "ada@example.com", "password": PASSWORD}
@@ -218,14 +211,14 @@ def test_an_email_off_the_list_cannot_sign_up(build_app: Callable[..., Flask]) -
 
 def test_a_domain_entry_lets_the_whole_firm_in(build_app: Callable[..., Flask]) -> None:
     client = build_app(allowed_emails="@frame.ie").test_client()
-    assert register(client, "anyone@frame.ie") == 201
-    assert register(client, "anyone@notframe.ie") == 403
-    assert register(client, "frame.ie@evil.example") == 403
+    assert register_status(client, "anyone@frame.ie") == 201
+    assert register_status(client, "anyone@notframe.ie") == 403
+    assert register_status(client, "frame.ie@evil.example") == 403
 
 
 def test_production_with_no_list_lets_nobody_in(build_app: Callable[..., Flask]) -> None:
     client = build_app(app_env="production", cookie_secure=False).test_client()
-    assert register(client, "ada@example.com") == 403
+    assert register_status(client, "ada@example.com") == 403
 
 
 def test_an_email_taken_off_the_list_cannot_sign_in(build_app: Callable[..., Flask]) -> None:

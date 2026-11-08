@@ -18,13 +18,23 @@ The Today screen at `/app` reads this one. It runs inside the main Flask app (`a
 | Case | Result |
 |---|---|
 | Sign up with an email off the list | `403 email_not_allowed` |
+| Sign up with no invite, a wrong, expired or used one, or one made for another email | `403 invite_invalid` |
 | Sign in, right password, email taken off the list | `403 email_not_allowed` |
 | Sign in, wrong password | `401 invalid_credentials`, whether or not the email is listed |
 | Any request from a session whose email was taken off the list | `401 invalid_session` |
 
 With the list empty, development lets anyone sign up and production lets nobody in. The app logs a warning at start-up in both cases. `FILINGS_ALLOWED_EMAILS` is still read as the old name for the same list.
 
-Sign-up does not check that people own the email they register, so a listed address counts for whoever registers it first. Ask each person to create their account as soon as you add them. Email verification would close this properly. On the Pi: `sudo dokku config:set corkathon2026 ALLOWED_EMAILS=alice@example.com,@frame.ie`.
+Accounts are by invite. `POST /api/auth/register` takes `{email, password, invite}`, where `invite` is the token from a link made by `python -m corkathon_api.invites create <email>`. A link works once, for that one email, for 7 days (`--days` up to 30), and making a new one for the same email stops the old one. Only a SHA-256 hash of the token is stored. So listing `@frame.ie` lets the firm in, but nobody can claim a colleague's address without the link sent to them. `INVITES_REQUIRED` defaults to on in production and off in development, and `SITE_URL` makes the command print the full link.
+
+On the Pi:
+
+```bash
+sudo dokku config:set corkathon2026 ALLOWED_EMAILS=alice@example.com,@frame.ie
+sudo dokku run corkathon2026 python -m corkathon_api.invites create alice@example.com
+sudo dokku run corkathon2026 python -m corkathon_api.invites list
+sudo dokku run corkathon2026 python -m corkathon_api.invites revoke alice@example.com
+```
 
 Each account keeps its own client list in the database, managed on the Clients page at `/app/clients`. Every report, briefing and client question reads only the signed-in account's list. A new account starts with an empty report.
 

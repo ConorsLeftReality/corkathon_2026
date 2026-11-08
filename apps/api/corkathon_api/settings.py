@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     filings_as_of: date | None = None
     # tests turn this off so the register index is built inside the request
     filings_build_in_background: bool = True
+    # sign-up needs an invite link, on by default in production only
+    invites_required: bool | None = None
+    # where people open the site, so invite links print in full
+    site_url: str = ""
     # emails or @domain entries, comma separated, production lets nobody in when empty
     allowed_emails: str = Field(
         default="", validation_alias=AliasChoices("allowed_emails", "filings_allowed_emails")

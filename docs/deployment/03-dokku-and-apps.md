@@ -45,6 +45,15 @@ Then set who may have an account on the site. Production lets nobody sign up or 
 sudo dokku config:set corkathon2026 ALLOWED_EMAILS=you@example.com,@clientfirm.ie
 ```
 
+Accounts are by invite, so being on the list is not enough to sign up. Tell the app its address once, then make a one-time link for each person and send it to them:
+
+```bash
+sudo dokku config:set corkathon2026 SITE_URL=https://<pi>.<tailnet>.ts.net
+sudo dokku run corkathon2026 python -m corkathon_api.invites create you@example.com
+```
+
+The link works once, for that email, for 7 days. `invites list` shows unused ones and `invites revoke <email>` cancels one. See [the API contract](../api-contract.md#who-can-have-an-account) for the rules.
+
 ## Client lists
 
 - **Site** (`corkathon2026`): each account adds its own clients on the Clients page, by company number or CSV upload. Nothing to copy onto the Pi. An old shared `my_companies.csv` in the storage folder is no longer read; upload it on the Clients page instead.

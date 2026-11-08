@@ -14,6 +14,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from corkathon_api.database import db
 from corkathon_api.errors import AppError
 from corkathon_api.features.auth.access import require_allowed
+from corkathon_api.features.auth.invites import take_invite
 from corkathon_api.features.auth.models import User
 from corkathon_api.features.auth.schemas import LoginBody, RegisterBody, UserOut
 from corkathon_api.features.auth.session import signed_in_user
@@ -57,6 +58,8 @@ def register() -> tuple[Response, int]:
     limit_by_address()
     body = parse_json_body(RegisterBody)
     require_allowed(body.email)
+    if current_app.config["INVITES_REQUIRED"]:
+        take_invite(body.email, body.invite)
     user = User(email=body.email, password_hash=generate_password_hash(body.password))
     db.session.add(user)
     try:

@@ -45,6 +45,11 @@ def apply_config(app: Flask, settings: Settings) -> None:
         JWT_COOKIE_CSRF_PROTECT=True,
         # a persistent cookie so a browser restart mid demo keeps the login
         JWT_SESSION_COOKIE=False,
+        INVITES_REQUIRED=(
+            settings.app_env == "production"
+            if settings.invites_required is None
+            else settings.invites_required
+        ),
     )
 
 

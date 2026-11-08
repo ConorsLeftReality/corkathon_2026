@@ -4,9 +4,11 @@ from pathlib import Path
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
+from werkzeug.test import TestResponse
 
 from corkathon_api.app import create_app
 from corkathon_api.database import db
+from corkathon_api.features.auth.invites import create_invite
 from corkathon_api.settings import Settings
 
 TEST_SECRET = "test-secret-that-is-long-enough-for-hs256"
@@ -22,6 +24,8 @@ def make_settings(tmp_path: Path, **overrides: object) -> Settings:
         # pinned so a developer's own .env allowlist never leaks into tests
         "allowed_emails": "",
         "filings_build_in_background": False,
+        # on as in production, so every sign-up in the tests goes through an invite
+        "invites_required": True,
     }
     return Settings(**{**values, **overrides})  # type: ignore[arg-type]
 
@@ -57,6 +61,18 @@ def csrf_headers(client: FlaskClient) -> dict[str, str]:
     return {"X-CSRF-TOKEN": cookie.value}
 
 
+def invite(client: FlaskClient, email: str) -> str:
+    with client.application.app_context():
+        return create_invite(email)
+
+
+def register(client: FlaskClient, email: str, **overrides: object) -> TestResponse:
+    """posts a sign-up with a fresh invite for the email unless the test overrides it"""
+    body: dict[str, object] = {"email": email, "password": PASSWORD}
+    if "invite" not in overrides:
+        body["invite"] = invite(client, email)
+    return client.post("/api/auth/register", json={**body, **overrides})
+
+
 def sign_up(client: FlaskClient, email: str) -> None:
-    response = client.post("/api/auth/register", json={"email": email, "password": PASSWORD})
-    assert response.status_code == 201
+    assert register(client, email).status_code == 201
