@@ -7,3 +7,6 @@ test-results/
 playwright-report/
 # copied from D:/dev/skills, fixes belong there
 skills/
+
+# verbatim playwright output
+docs/test-results-example
