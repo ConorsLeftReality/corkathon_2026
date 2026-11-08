@@ -26,7 +26,10 @@ function AddForm({ onAdd }: { onAdd: (companyNum: string) => Promise<boolean> })
   }
 
   return (
-    <form className="flex flex-col gap-2 surface p-4" onSubmit={(event) => void submit(event)}>
+    <form
+      className="flex min-w-0 flex-col gap-2 surface p-4"
+      onSubmit={(event) => void submit(event)}
+    >
       <h2 className="font-semibold">Add one company</h2>
       <label htmlFor={inputId}>CRO company number</label>
       <div className="flex gap-2">
@@ -85,14 +88,17 @@ function UploadForm({ onUpload }: UploadFormProps) {
   }
 
   return (
-    <form className="flex flex-col gap-3 surface p-4" onSubmit={(event) => void submit(event)}>
+    <form
+      className="flex min-w-0 flex-col gap-3 surface p-4"
+      onSubmit={(event) => void submit(event)}
+    >
       <h2 className="font-semibold">Upload a CSV</h2>
       <div className="flex flex-col gap-1">
         <label htmlFor={fileId}>CSV file</label>
         <input
           id={fileId}
           ref={fileInput}
-          className="field"
+          className="field w-full min-w-0 max-w-full text-label"
           type="file"
           accept=".csv,text/csv"
           required
@@ -108,7 +114,7 @@ function UploadForm({ onUpload }: UploadFormProps) {
           1 MB.
         </p>
       </div>
-      <fieldset className="flex flex-col gap-1">
+      <fieldset className="flex min-w-0 flex-col gap-1">
         <legend className="mb-1">What should the file do?</legend>
         <label className="flex items-center gap-2">
           <input
@@ -264,7 +270,7 @@ export function ClientsPanel({ onSessionLost }: { onSessionLost: () => void }) {
           list.
         </p>
       </header>
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <AddForm onAdd={add} />
         <UploadForm onUpload={upload} />
       </div>
