@@ -75,14 +75,33 @@ sudo dokku run cro-tracker python scheduler.py --once  # build today's reports n
 curl -H "Authorization: Bearer $(sudo dokku config:get cro-tracker API_TOKEN)" http://127.0.0.1:9001/api/clients
 ```
 
-The site is at `http://<pi tailscale ip>:9000` from any device on the tailnet. It is served over plain http there, so `setup.sh` sets `COOKIE_SECURE=false`. If you put it behind HTTPS (for example `dokku letsencrypt:enable corkathon2026` on a public domain), set `COOKIE_SECURE=true`.
+## HTTPS
+
+The site is at **https://<pi>.<tailnet>.ts.net** from any device on the tailnet (on a new Pi, `tailscale serve status` prints the address). Nothing is exposed to the internet.
+
+`setup.sh` turns this on with Tailscale Serve:
+
+```bash
+sudo tailscale serve --bg --https=443 http://127.0.0.1:9000
+sudo dokku config:set corkathon2026 COOKIE_SECURE=true
+```
+
+- Tailscale fetches a Let's Encrypt certificate for the Pi's `ts.net` name and renews it by itself, so there is no cron job or `dokku certs` step. The setting survives reboots.
+- It needs MagicDNS and HTTPS Certificates turned on in the Tailscale admin console (the DNS page; see [step 1](01-pi.md#tailscale)). If they are off, `setup.sh` warns and leaves the site on plain http with `COOKIE_SECURE=false`.
+- Tailscale catches port 443 on the tailnet address before Dokku's nginx sees it, so the two do not clash. On the Pi itself, `curl https://<name>.ts.net` reaches nginx instead and fails. Test from another device.
+- Session cookies are `Secure`, so signing in works only at the HTTPS address. `http://<pi tailscale ip>:9000` still answers, which is fine for `curl` health checks, but sign-in there bounces back to the login page.
+- Copy briefing uses the clipboard API, which browsers allow only on HTTPS.
+- Only `corkathon2026` is served this way. `cro-tracker` is read by the phone scripts on the Pi itself, over `127.0.0.1:9001`.
+
+To turn HTTPS off: `sudo tailscale serve --https=443 off`, then `sudo dokku config:set corkathon2026 COOKIE_SECURE=false`.
 
 ## Troubleshooting
 
 | Symptom | Fix |
 |---|---|
 | App restarts every few seconds, log shows a pydantic `ValidationError` | A required setting is missing, usually `JWT_SECRET_KEY`. `sudo dokku config:show corkathon2026` |
-| Sign-in bounces back to the login page | `COOKIE_SECURE=true` over plain http. Set it to `false`, or serve HTTPS |
+| Sign-in bounces back to the login page | You opened the plain http address. Use `https://<pi>.<tailnet>.ts.net` |
+| `tailscale serve` prints a link and waits | HTTPS Certificates are off in the tailnet. Turn them on (admin console, DNS) and rerun `setup.sh` |
 | Build killed or stalls | Out of memory. Check `free -h` and the swap above; only one deploy runs at a time |
 | cro-tracker returns 401 | Missing or wrong `Authorization: Bearer` header |
 | Push ignored | Deploy branch not `main`: `sudo dokku git:set <app> deploy-branch main` |
