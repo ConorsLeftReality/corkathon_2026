@@ -2,7 +2,7 @@
 
 ## The idea in one sentence
 
-Dialed In tells an accountant, on a web page or their phone, which companies are about to miss or have already missed a CRO filing deadline, using the free daily company register, and shows exactly how it got the answer.
+Dialed-In tells an accountant, on a web page or their phone, which companies are about to miss or have already missed a CRO filing deadline, using the free daily company register, and shows exactly how it got the answer.
 
 ## The problem
 
