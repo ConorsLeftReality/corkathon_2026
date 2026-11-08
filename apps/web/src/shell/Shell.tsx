@@ -1,4 +1,5 @@
 import {
+  IconBuildingCommunity,
   IconCalendarDue,
   IconLogout,
   IconNotes,
@@ -19,6 +20,11 @@ import { useSession } from '#src/features/auth/SessionProvider.tsx'
 
 const NAV_ITEMS: readonly SidebarItem[] = [
   { to: '/app', label: 'Today', icon: <IconCalendarDue size={18} aria-hidden />, end: true },
+  {
+    to: '/app/clients',
+    label: 'Clients',
+    icon: <IconBuildingCommunity size={18} aria-hidden />,
+  },
   { to: '/app/radar', label: 'Filing deadlines', icon: <IconRadar2 size={18} aria-hidden /> },
   { to: '/app/notes', label: 'Notes', icon: <IconNotes size={18} aria-hidden /> },
 ]

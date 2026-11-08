@@ -13,6 +13,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from corkathon_api.database import db
 from corkathon_api.errors import AppError
+from corkathon_api.features.auth.access import require_allowed
 from corkathon_api.features.auth.models import User
 from corkathon_api.features.auth.schemas import LoginBody, RegisterBody, UserOut
 from corkathon_api.features.auth.session import signed_in_user
@@ -55,6 +56,7 @@ def signed_in_response(user: User, status: int) -> tuple[Response, int]:
 def register() -> tuple[Response, int]:
     limit_by_address()
     body = parse_json_body(RegisterBody)
+    require_allowed(body.email)
     user = User(email=body.email, password_hash=generate_password_hash(body.password))
     db.session.add(user)
     try:
@@ -76,6 +78,8 @@ def login() -> tuple[Response, int]:
     password_matches = check_password_hash(stored_hash, body.password)
     if user is None or not password_matches:
         raise AppError("invalid_credentials", "Email or password is incorrect.", 401)
+    # checked after the password so the list cannot be probed through sign in
+    require_allowed(user.email)
     return signed_in_response(user, 200)
 
 

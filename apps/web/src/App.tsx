@@ -2,6 +2,7 @@ import { LazyMotion, MotionConfig } from 'motion/react'
 import { createBrowserRouter, RouterProvider } from 'react-router'
 import { DitherBackdrop } from '#src/components/DitherBackdrop.tsx'
 import { SessionProvider } from '#src/features/auth/SessionProvider.tsx'
+import { ClientsPage } from '#src/routes/ClientsPage.tsx'
 import { LandingPage } from '#src/routes/LandingPage.tsx'
 import { LoginPage } from '#src/routes/LoginPage.tsx'
 import { NotesPage } from '#src/routes/NotesPage.tsx'
@@ -25,6 +26,7 @@ const router = createBrowserRouter([
         element: <Shell />,
         children: [
           { index: true, element: <TodayPage /> },
+          { path: 'clients', element: <ClientsPage /> },
           { path: 'radar', element: <RadarPage /> },
           { path: 'notes', element: <NotesPage /> },
         ],

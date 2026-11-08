@@ -26,6 +26,18 @@ test('a wrong password shows an error and stays signed out', async ({ page }) =>
   await expect(page.getByRole('alert')).toHaveText('Email or password is incorrect.')
 })
 
+test('an email off the access list cannot create an account', async ({ page }) => {
+  await page.goto('/login')
+  await page.getByRole('button', { name: 'I need an account' }).click()
+  await page.getByLabel('Email').fill('stranger@not-on-the-list.test')
+  await page.getByLabel('Password').fill(PASSWORD)
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page.getByRole('alert')).toHaveText(
+    'This email is not on the access list. Ask your admin to add it.',
+  )
+  await expect(page.getByRole('heading', { name: 'Create account' })).toBeVisible()
+})
+
 test('a short password marks the field invalid', async ({ page }) => {
   await page.goto('/login')
   await page.getByRole('button', { name: 'I need an account' }).click()

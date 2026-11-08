@@ -45,6 +45,10 @@ function buildInit(options: RequestOptions, cookies: string): RequestInit {
     headers.set('X-CSRF-TOKEN', csrfToken)
   }
   if (options.body === undefined) return { method: options.method ?? 'GET', headers }
+  // the browser writes the multipart boundary itself, so no content type here
+  if (options.body instanceof FormData) {
+    return { method: options.method ?? 'GET', headers, body: options.body }
+  }
   headers.set('Content-Type', 'application/json')
   return { method: options.method ?? 'GET', headers, body: JSON.stringify(options.body) }
 }

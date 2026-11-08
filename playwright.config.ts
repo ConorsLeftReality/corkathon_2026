@@ -22,7 +22,6 @@ writeFileSync(
     '700010,E2E HARBOUR CAFE LIMITED,Normal,2019-01-01,2026-03-01,56.10,T12AB12,CORK',
   ].join('\n'),
 )
-writeFileSync(join(filings, 'my_companies.csv'), 'company_num\n700001\n700002\n700003\n')
 
 export default defineConfig({
   testDir: 'apps/web/tests/e2e',
@@ -52,8 +51,10 @@ export default defineConfig({
       AUTH_RATE_LIMIT_PER_MINUTE: '100000',
       FILINGS_DATA_DIR: filings,
       FILINGS_AS_OF,
-      // pinned so a developer's own .env allowlist never locks out the test accounts
-      FILINGS_ALLOWED_EMAILS: '',
+      // the fixture snapshot is tiny, so the register index is built inside the first request
+      FILINGS_BUILD_IN_BACKGROUND: 'false',
+      // every test account is on example.com, so anything else proves the list is checked
+      ALLOWED_EMAILS: '@example.com',
     },
   },
 })

@@ -9,6 +9,7 @@ from flask import Flask
 from flask.testing import FlaskClient
 
 from conftest import csrf_headers, sign_up
+from corkathon_api.features.auth.access import AccessList
 from corkathon_api.features.radar.service import RadarService
 
 AS_OF = date(2026, 11, 7)
@@ -112,7 +113,6 @@ def data_dir(tmp_path: Path) -> Path:
     (folder / f"cro_companies_{AS_OF.isoformat()}.csv.zip").write_text(
         text.getvalue(), encoding="utf-8"
     )
-    (folder / "my_companies.csv").write_text("company_num\n4\n5\n", encoding="utf-8")
     return folder
 
 
@@ -123,9 +123,23 @@ def build(build_app: Callable[..., Flask], data_dir: Path, **extra: object) -> F
 
 
 @pytest.fixture
-def signed_in(build_app: Callable[..., Flask], data_dir: Path) -> FlaskClient:
-    client = build(build_app, data_dir).test_client()
+def radar_app(build_app: Callable[..., Flask], data_dir: Path) -> Flask:
+    return build(build_app, data_dir)
+
+
+def add_clients(client: FlaskClient, *numbers: str) -> None:
+    for number in numbers:
+        response = client.post(
+            "/api/clients", json={"company_num": number}, headers=csrf_headers(client)
+        )
+        assert response.status_code == 201
+
+
+@pytest.fixture
+def signed_in(radar_app: Flask) -> FlaskClient:
+    client = radar_app.test_client()
     sign_up(client, "ada@example.com")
+    add_clients(client, "4", "5")
     return client
 
 
@@ -173,6 +187,19 @@ def test_client_questions_use_the_client_list(signed_in: FlaskClient) -> None:
     ]
 
 
+def test_client_questions_never_read_another_accounts_list(
+    radar_app: Flask, signed_in: FlaskClient
+) -> None:
+    other = radar_app.test_client()
+    sign_up(other, "grace@example.com")
+    assert names(ask(other, {"mode": "clients", "preset": "clients_overdue"})) == []
+    add_clients(other, "5")
+    assert names(ask(other, {"mode": "clients", "preset": "clients_overdue"})) == []
+    assert names(ask(signed_in, {"mode": "clients", "preset": "clients_overdue"})) == [
+        "CLIENT LATE LIMITED"
+    ]
+
+
 def test_typed_questions_say_they_are_not_available_yet(signed_in: FlaskClient) -> None:
     response = ask(signed_in, {"mode": "prospects", "question": "overdue cork cafes"})
     assert response.status_code == 503
@@ -193,13 +220,15 @@ def test_a_question_and_a_preset_together_is_refused(signed_in: FlaskClient) -> 
     assert response.status_code == 422
 
 
-def test_an_account_off_the_allowlist_cannot_ask(
+def test_an_account_taken_off_the_list_cannot_ask(
     build_app: Callable[..., Flask], data_dir: Path
 ) -> None:
-    client = build(build_app, data_dir, filings_allowed_emails="someone@example.com").test_client()
-    sign_up(client, "stranger@example.com")
+    app = build(build_app, data_dir, allowed_emails="ada@example.com")
+    client = app.test_client()
+    sign_up(client, "ada@example.com")
+    app.extensions["access_list"] = AccessList.parse("someone@example.com", open_when_empty=False)
     response = ask(client, {"mode": "prospects", "preset": "overdue_cork_city"})
-    assert response.status_code == 403
+    assert response.status_code == 401
 
 
 def test_the_first_ask_of_the_day_prepares_in_the_background(

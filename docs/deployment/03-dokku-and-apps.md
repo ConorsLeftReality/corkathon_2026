@@ -29,15 +29,15 @@ sudo bash infra/dokku/setup.sh
 
 It creates both apps, the storage mounts, the port mappings and the secrets (`JWT_SECRET_KEY` for the site, `API_TOKEN` for cro-tracker), and prints the cro-tracker `API_TOKEN`. Keep that for step 4. Rerunning it never replaces an existing secret.
 
-Then set who may read the client report on the site. Sign-up is open, so do this before loading a real client list:
+Then set who may have an account on the site. Production lets nobody sign up or sign in until this is set. Entries are emails or `@domain` for a whole firm:
 
 ```bash
-sudo dokku config:set corkathon2026 FILINGS_ALLOWED_EMAILS=you@example.com,teammate@example.com
+sudo dokku config:set corkathon2026 ALLOWED_EMAILS=you@example.com,@clientfirm.ie
 ```
 
 ## Client lists
 
-- **Site** (`corkathon2026`): one shared CSV with a `company_num` column at `/var/lib/dokku/data/storage/corkathon2026/filings/my_companies.csv`. Copy it there and `sudo chown 1000:1000` it.
+- **Site** (`corkathon2026`): each account adds its own clients on the Clients page, by company number or CSV upload. Nothing to copy onto the Pi. An old shared `my_companies.csv` in the storage folder is no longer read; upload it on the Clients page instead.
 - **cro-tracker**: one CSV per client in `apps/cro-tracker/clients/`. The file name is the client id, so `acme.csv` is served at `/api/acme/report`. Commit and push to change them. See [apps/cro-tracker/DEPLOY.md](../../apps/cro-tracker/DEPLOY.md) for the full API.
 
 ## After the first deploy (step 5)

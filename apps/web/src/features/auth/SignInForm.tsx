@@ -35,6 +35,11 @@ export function SignInForm({ onSignedIn }: { onSignedIn: (user: User) => void })
   return (
     <form className="flex flex-col gap-4 surface p-6" onSubmit={(event) => void submit(event)}>
       <h2 className="text-h2 font-semibold">{registering ? 'Create account' : 'Sign in'}</h2>
+      {registering && (
+        <p className="text-graphite">
+          Use the work email your firm has given access to. Other emails cannot sign up.
+        </p>
+      )}
 
       <div className="flex flex-col gap-1">
         <label htmlFor={emailId}>Email</label>

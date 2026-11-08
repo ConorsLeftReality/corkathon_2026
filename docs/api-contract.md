@@ -8,23 +8,45 @@ The Today screen at `/app` reads this one. It runs inside the main Flask app (`a
 
 | Setting | Default | What it does |
 |---|---|---|
-| `FILINGS_DATA_DIR` | `apps/api/instance/filings`, `/data/filings` in the container | Holds the CRO snapshot, `my_companies.csv` and the cached `report.json` |
+| `FILINGS_DATA_DIR` | `apps/api/instance/filings`, `/data/filings` in the container | Holds today's CRO snapshot and the register index built from it |
 | `FILINGS_WINDOW_DAYS` | `30` | How far ahead counts as due |
 | `FILINGS_AS_OF` | today | A fixed date for a reproducible demo |
-| `FILINGS_ALLOWED_EMAILS` | not set | Comma separated emails. When set, only those accounts can read the report; everyone else gets `403 filings_forbidden` |
+## Who can have an account
 
-Sign-up is open and the client list is shared, so **set `FILINGS_ALLOWED_EMAILS` before you put a real `my_companies.csv` on the server**. Without it, anyone who creates an account can read the list. The app logs a warning at start-up when a client list exists and no allowlist is set. Leaving it unset is fine while the demo list of public companies is in use.
+`ALLOWED_EMAILS` is a comma separated list of emails and `@domain` entries, for example `alice@example.com,@frame.ie`. Only those emails can create an account, sign in or keep a session, before they can hold a client list.
 
-Sign-up does not check that people own the email they register, so an allowlisted address counts for whoever registers it first. Have every allowed person create their account **before** you set the list; after that an impostor cannot take the address, because emails are unique. Email verification or admin-granted access would close this properly. On the Pi: `dokku config:set corkathon2026 FILINGS_ALLOWED_EMAILS=alice@example.com,bob@example.com`.
+| Case | Result |
+|---|---|
+| Sign up with an email off the list | `403 email_not_allowed` |
+| Sign in, right password, email taken off the list | `403 email_not_allowed` |
+| Sign in, wrong password | `401 invalid_credentials`, whether or not the email is listed |
+| Any request from a session whose email was taken off the list | `401 invalid_session` |
 
-Without a `my_companies.csv` in the data folder, the report uses a demo list of public companies (Ryanair, Kerry Group, CRH and one fake number). On the first request of the day the app downloads the CRO snapshot (about 47 MB) in the background and answers `503 filings_building` until it is ready; the page shows that message with a retry button. To use your own list on the Pi, copy it into the app's `/data/filings/` volume and press Rebuild report.
+With the list empty, development lets anyone sign up and production lets nobody in. The app logs a warning at start-up in both cases. `FILINGS_ALLOWED_EMAILS` is still read as the old name for the same list.
+
+Sign-up does not check that people own the email they register, so a listed address counts for whoever registers it first. Ask each person to create their account as soon as you add them. Email verification would close this properly. On the Pi: `sudo dokku config:set corkathon2026 ALLOWED_EMAILS=alice@example.com,@frame.ie`.
+
+Each account keeps its own client list in the database, managed on the Clients page at `/app/clients`. Every report, briefing and client question reads only the signed-in account's list. A new account starts with an empty report.
+
+On the first request of the day the app downloads the CRO snapshot (about 47 MB) and builds a small indexed copy of it (`cro_register_<date>.sqlite`), both in the background, and answers `503 filings_building` until it is ready. After that a report is one indexed lookup of that account's companies, so it never rereads the whole file. Older days' files are deleted once today's are ready.
+
+### Client list routes
+
+| Route | Body | Returns |
+|---|---|---|
+| `GET /api/clients` | | `{clients: [{company_num, added_at}], limit}` |
+| `POST /api/clients` | `{company_num}`, digits only, up to 10 | the list, `201`. `409 client_exists` if already listed |
+| `POST /api/clients/upload` | multipart: `file` (CSV, up to 1 MB) and `mode` (`add` or `replace`) | `{added, already_listed, skipped}` |
+| `DELETE /api/clients/<company_num>` | | `204`, or `404 not_found` if it is not on your list |
+
+The CSV needs a `company_num` column (or `company_number`, `cro number` and similar), or numbers in the first column. Anything that is not 1 to 10 digits is counted in `skipped` and dropped. The file is parsed and thrown away; only the numbers are stored. An account holds up to 2000 companies (`422 client_limit_reached`). A file with no numbers is `422 upload_empty`, one that is not UTF-8 is `422 upload_unreadable`, and a refused upload never changes the list.
 
 | Route | Returns | Used by |
 |---|---|---|
 | `GET /api/report` | `{generated_at, as_of, window_days, grace_days, counts, companies, source}`, optional `?status=due,overdue` | Today screen: tiles, overdue and due tables |
 | `GET /api/companies` | the sorted `companies` list only | not used yet |
 | `GET /api/briefing` | plain text for the phone | Today screen: "What the phone reads" |
-| `POST /api/refresh` | the rebuilt report | Today screen: "Rebuild report" |
+| `POST /api/refresh` | the report, read fresh | Today screen: "Rebuild report" |
 
 The zod schema for the report is `reportSchema` in `apps/web/src/features/filings/filings-api.ts`. Each company has `company_num`, `company_name`, `company_status`, `company_type`, `address`, `last_ar_date`, `nard`, `deadline`, `days_left` (negative when overdue) and `status` (`overdue`, `due`, `ok`, `unknown`, `dissolved` or `not_found`). Errors come back as `{"error": {"code": ..., "message": ...}}`; the page shows the message.
 

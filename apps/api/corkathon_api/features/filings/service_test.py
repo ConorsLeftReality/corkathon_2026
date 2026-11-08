@@ -1,36 +1,38 @@
 from pathlib import Path
 
+import pytest
+
+from corkathon_api.errors import AppError
 from corkathon_api.features.filings.routes_test import AS_OF, write_snapshot
 from corkathon_api.features.filings.service import FilingsService
 
 
-class FakeClock:
-    def __init__(self) -> None:
-        self.now = 1000.0
-
-    def __call__(self) -> float:
-        return self.now
-
-
-def make_service(folder: Path, clock: FakeClock) -> FilingsService:
+def test_the_register_index_is_built_once_and_reused(tmp_path: Path) -> None:
+    folder = tmp_path / "filings"
     write_snapshot(folder)
-    return FilingsService(folder, 30, today=lambda: AS_OF, clock=clock)
+    service = FilingsService(folder, 30, today=lambda: AS_OF, background=False)
+    first = service.report_for({"104547"})
+    index = service.index_path(AS_OF)
+    built_at = index.stat().st_mtime_ns
+    second = service.report_for({"104547", "500"})
+    assert index.stat().st_mtime_ns == built_at
+    assert [c["company_name"] for c in first["companies"]] == ["RYANAIR DAC"]
+    assert {c["company_name"] for c in second["companies"]} == {"RYANAIR DAC", "NOT A CLIENT LTD"}
 
 
-def test_back_to_back_rebuilds_reuse_the_last_report(tmp_path: Path) -> None:
-    clock = FakeClock()
-    service = make_service(tmp_path / "filings", clock)
-    service.rebuild()
-    clock.now += 5
-    service.rebuild()
-    # rereading the whole cro file on every click would let one account pin the pi's cpu
-    assert service.builds == 1
+def test_an_old_days_files_are_removed_once_today_is_ready(tmp_path: Path) -> None:
+    folder = tmp_path / "filings"
+    write_snapshot(folder)
+    stale = [folder / "cro_companies_2026-11-06.csv.zip", folder / "cro_register_2026-11-06.sqlite"]
+    for path in stale:
+        path.write_text("old", encoding="utf-8")
+    FilingsService(folder, 30, today=lambda: AS_OF, background=False).report_for({"1"})
+    assert not any(path.exists() for path in stale)
 
 
-def test_a_rebuild_after_the_pause_reads_the_file_again(tmp_path: Path) -> None:
-    clock = FakeClock()
-    service = make_service(tmp_path / "filings", clock)
-    service.rebuild()
-    clock.now += 16
-    service.rebuild()
-    assert service.builds == 2
+def test_without_a_snapshot_the_report_waits_for_the_download(tmp_path: Path) -> None:
+    fetched: list[Path] = []
+    service = FilingsService(tmp_path, 30, today=lambda: AS_OF, download=fetched.append)
+    with pytest.raises(AppError) as raised:
+        service.report_for({"104547"})
+    assert raised.value.code == "filings_building"
