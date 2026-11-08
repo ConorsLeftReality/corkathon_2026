@@ -1,6 +1,6 @@
 # Working in this repo
 
-Rules for the three of us and for any coding agent. `README.md` covers the product and quickstart, `docs/scaffold.md` the scaffold commands and deploy, and `docs/` the Dialed In design.
+Rules for the three of us and for any coding agent. `README.md` covers the product and quickstart, `docs/scaffold.md` the scaffold commands and deploy, and `docs/` the Dialed-In design.
 
 ## Layout
 
@@ -11,6 +11,8 @@ Rules for the three of us and for any coding agent. `README.md` covers the produ
   - `src/components/ui/`: copy-in components, which are ours once imported.
 - `apps/api`: Flask, SQLAlchemy, pydantic. Features live in `corkathon_api/features/<name>/`.
 - `apps/web/tests/e2e`: Playwright against the built app served by Flask.
+- `apps/cro-tracker`: standalone Flask report API read by the phone, deployed as its own Dokku app.
+- `infra/`: Pi network, Asterisk config and menus, the CRO Tracker phone scripts and Dokku setup. How to deploy all of it is in `docs/deployment/`.
 - `notes` is the example feature. Copy its shape, then delete it when the real project needs the space.
 
 ## Rules
