@@ -1,6 +1,6 @@
 # 4. CRO Tracker phone line
 
-The scripts in [`infra/phone`](../../infra/phone/README.md) answer calls to `100`, then `1` (CRO Tracker), from the cro-tracker report, and ring a handset each weekday morning with the review.
+The scripts in [`infra/phone`](../../infra/phone/README.md) answer questions asked on `100`, then `1` (CRO Tracker), then `1`, from the cro-tracker report, and ring a handset each weekday morning with the review.
 
 ## Install
 
@@ -36,13 +36,13 @@ The first Pi ran these scripts from `/opt/filing-radar` with the menu in `/etc/a
 ```bash
 cd ~/corkathon2026 && git pull
 sudo bash infra/asterisk/install.sh   # installs dialed-in.conf, retires filing-radar.conf
-sudo bash infra/asterisk/make_prompts.sh --force menu   # the CRO Tracker menu no longer says "Filing Radar"
+sudo bash infra/asterisk/make_prompts.sh --force menu sorry   # new menu wording, no old options
 sudo bash infra/phone/deploy.sh       # copies /opt/filing-radar/.env across, removes the old cron file
 ```
 
-Call `100`, press `1`, then `3`, and ask a question. When it answers, delete the old folder: `sudo rm -r /opt/filing-radar`.
+Call `100`, press `1` twice, and ask a question. When it answers, delete the old folder: `sudo rm -r /opt/filing-radar`.
 
-The new `100` has a top menu, so callers press `1` for CRO Tracker before the old options. `make_prompts.sh` renders the new `main-menu` prompt; if you used ElevenLabs for the others, record `main-menu` and `menu` there too.
+The new `100` has a top menu, so callers press `1` for CRO Tracker, then `1` to ask a question. The old options 1 (this week's deadlines) and 2 (overdue Cork companies) are gone, so `--force menu sorry` above re-renders the CRO Tracker menu without them. If you used ElevenLabs for the prompts, record `main-menu`, `menu` and `sorry` there too. The old `week` and `overdue-cork` files in `/srv/voip/prerendered_audio/` are no longer played and can be deleted.
 
 ## Test by hand
 
@@ -59,8 +59,7 @@ tail -f /var/spool/asterisk/dialed-in/log.txt   # question, answer and timing pe
 
 ## Known gaps
 
-- Options `1` and `2` play the fixed `week` and `overdue-cork` prompts, which are still placeholders ("Details coming soon"). Option `3` and the morning review do read the live report.
-- Speech to text uses Google's free endpoint, so option `3` needs internet. There is no offline fallback.
+- Speech to text uses Google's free endpoint, so asking a question needs internet. There is no offline fallback.
 
 ## Troubleshooting
 

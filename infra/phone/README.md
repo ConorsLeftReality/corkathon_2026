@@ -4,7 +4,7 @@ Python scripts that run on the Pi beside Asterisk. They read the client report f
 
 | File | Installed to | Purpose |
 | --- | --- | --- |
-| `transcribe_audio.py` | `/opt/dialed-in/` | Run by Asterisk when a caller presses 3 and asks a question; also the hourly `--pregenerate` job |
+| `transcribe_audio.py` | `/opt/dialed-in/` | Run by Asterisk when a caller presses 1 and asks a question; also the hourly `--pregenerate` job |
 | `morning_review.py` | `/opt/dialed-in/` | Builds the spoken morning review and rings an extension with it |
 | `call_extension.py` | `/opt/dialed-in/` | Rings an extension and plays a WAV, through an Asterisk call file |
 | `env.example` | `/opt/dialed-in/.env` (asterisk, 600) | Settings. `API_TOKEN` and `DEFAULT_CLIENT` are the ones to fill in |

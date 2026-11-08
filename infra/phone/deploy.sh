@@ -115,7 +115,7 @@ fi
 echo "== 7. End-to-end test (exactly as Asterisk runs it)"
 WAV=${1:-$(ls -t $SPOOL/q-*.wav 2>/dev/null | head -1)}
 if [ -z "${WAV:-}" ] || [ ! -f "$WAV" ]; then
-  warn "no q-*.wav to test with yet; call 100, press 1 then 3, ask something, and rerun"
+  warn "no q-*.wav to test with yet; call 100, press 1 twice, ask something, and rerun"
 else
   rm -f /tmp/test.wav
   START=$(date +%s%N)

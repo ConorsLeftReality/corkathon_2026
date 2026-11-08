@@ -16,7 +16,7 @@ call starts straight away with no piper wait. Files older than 7 days are delete
 
 Reuses /opt/dialed-in/transcribe_audio.py for its settings (.env: REPORT_URL,
 DEFAULT_CLIENT, PIPER, PIPER_VOICE) and its speech helpers, so the wording
-matches phone option 3. Piper is slow on the Pi (about a minute), which is fine
+matches phone option 1. Piper is slow on the Pi (about a minute), which is fine
 here because it runs before the call is placed.
 """
 import argparse

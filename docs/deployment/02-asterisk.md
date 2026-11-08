@@ -46,7 +46,7 @@ Asterisk only binds `10.99.99.1`, so if it started before `eth0` had a link, res
 | Number | What it is |
 |---|---|
 | `100` | Dialed-In menu. 1 = CRO Tracker |
-| `100`, then `1` | CRO Tracker: 1 this week's deadlines, 2 overdue Cork companies, 3 ask a question, `*` back |
+| `100`, then `1` | CRO Tracker: 1 ask a question, `*` back |
 | `1001` | Cisco DECT handset |
 | `1002` | Zoiper softphone |
 | `1003` to `1010` | Spare accounts for more handsets or softphones |

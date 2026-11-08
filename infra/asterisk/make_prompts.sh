@@ -49,15 +49,12 @@ say() {
 # top menu: one option per service, see infra/asterisk/dialed-in.conf
 say main-menu    "Dialed-In. Press 1 for CRO Tracker."
 # cro tracker menu
-say menu         "CRO Tracker. Press 1 for this week's deadlines. Press 2 for overdue Cork companies. Press 3 to ask a question. Press star to go back."
+say menu         "CRO Tracker. Press 1 to ask a question about your clients' filings. Press star to go back."
 say ask          "Ask your question after the beep."
 say one-moment   "One moment."
-say sorry        "Sorry, I couldn't answer that right now. Try options 1 or 2."
+say sorry        "Sorry, I couldn't answer that right now. Please try again."
 say invalid      "Sorry, that's not an option."
 say goodbye      "Goodbye."
-# placeholders until options 1 and 2 are generated from the report, see docs/deployment/04-phone.md
-say week         "Three clients have a filing due this week. Details coming soon."
-say overdue-cork "Here are overdue Cork companies. Details coming soon."
 
 chown -R asterisk:asterisk /srv/voip /var/spool/asterisk/dialed-in
 echo "done: $(ls "$OUT" | wc -l) files in $OUT"

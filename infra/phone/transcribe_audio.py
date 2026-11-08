@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Dialed-In CRO Tracker - phone option 3 (ask a question).
+Dialed-In CRO Tracker - phone option 1 (ask a question).
 
 Called by Asterisk:
     /usr/bin/python3 /opt/dialed-in/transcribe_audio.py <input.wav> <output_path> [client]
 
-Called by cron (every hour, see deploy_option3.sh):
+Called by cron (every hour, see deploy.sh):
     /usr/bin/python3 /opt/dialed-in/transcribe_audio.py --pregenerate [client ...]
 
 1. Speech-to-text on the caller's WAV  (SpeechRecognition + Google)
