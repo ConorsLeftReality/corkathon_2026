@@ -27,7 +27,7 @@ sudo chown -R 1000:1000 /var/lib/dokku/data/storage/cro-tracker
 sudo dokku storage:mount cro-tracker /var/lib/dokku/data/storage/cro-tracker:/app/data
 
 # API_TOKEN keeps client lists private: every call except /api/health needs it.
-# Put the same value in the phone's /opt/filing-radar/.env as API_TOKEN.
+# Put the same value in the phone's /opt/dialed-in/.env as API_TOKEN.
 sudo dokku config:set --no-restart cro-tracker API_TOKEN="$(openssl rand -hex 32)" WINDOW_DAYS=30
 sudo dokku ports:set cro-tracker http:9001:5000
 ```

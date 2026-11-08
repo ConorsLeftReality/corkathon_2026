@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
 """
-Filing Radar - morning review call.
+Dialed-In CRO Tracker - morning review call.
 
 Fetches a client's report from cro-tracker, turns it into a short spoken
 review (overdue first, then what's due), renders it with piper, and rings a
-PJSIP extension with audio_to_call.py to play it.
+PJSIP extension with call_extension.py to play it.
 
-    sudo python3 /opt/filing-radar/morning_review.py --endpoint 1001
-    sudo python3 /opt/filing-radar/morning_review.py --endpoint 1001 --client acme
-    sudo python3 /opt/filing-radar/morning_review.py --dry-run      # print + render + save, no call
+    sudo python3 /opt/dialed-in/morning_review.py --endpoint 1001
+    sudo python3 /opt/dialed-in/morning_review.py --endpoint 1001 --client acme
+    sudo python3 /opt/dialed-in/morning_review.py --dry-run      # print + render + save, no call
 
 Rendered reviews are saved in <TTS_CACHE>/morning/, keyed by their exact text.
 If today's review is already there (e.g. a --dry-run at 06:30 rendered it), the
 call starts straight away with no piper wait. Files older than 7 days are deleted.
 
-Reuses /opt/filing-radar/transcribe_audio.py for its settings (.env: REPORT_URL,
+Reuses /opt/dialed-in/transcribe_audio.py for its settings (.env: REPORT_URL,
 DEFAULT_CLIENT, PIPER, PIPER_VOICE) and its speech helpers, so the wording
-matches phone option 3. Piper is slow on the Pi (about a minute), which is fine
+matches phone option 1. Piper is slow on the Pi (about a minute), which is fine
 here because it runs before the call is placed.
 """
 import argparse
@@ -26,10 +26,10 @@ import subprocess
 import sys
 import time
 
-sys.path.insert(0, "/opt/filing-radar")
+sys.path.insert(0, "/opt/dialed-in")
 import transcribe_audio as t  # noqa: E402
 
-CALL_SCRIPT = "/srv/voip/scripts/audio_to_call.py"
+CALL_SCRIPT = "/opt/dialed-in/call_extension.py"
 MAX_LISTED = 8              # companies read out per section before "and N more"
 PIPER_TIMEOUT_S = 600
 KEEP_DAYS = 7
@@ -95,7 +95,7 @@ def build_review(client, companies, today):
 def main():
     ap = argparse.ArgumentParser(description="Phone a morning filing review to an extension.")
     ap.add_argument("--endpoint", help="PJSIP extension to call, e.g. 1001 (required unless --dry-run)")
-    ap.add_argument("--client", help="client id (default: DEFAULT_CLIENT in /opt/filing-radar/.env)")
+    ap.add_argument("--client", help="client id (default: DEFAULT_CLIENT in /opt/dialed-in/.env)")
     ap.add_argument("--call-script", default=CALL_SCRIPT, help=f"default: {CALL_SCRIPT}")
     ap.add_argument("--dry-run", action="store_true", help="print the text and render + save the audio, but don't call")
     args = ap.parse_args()
@@ -121,7 +121,7 @@ def main():
         return 0
 
     log(f"calling {args.endpoint}...")
-    # audio_to_call.py converts its own copy, places the call and waits for the result
+    # call_extension.py converts its own copy, places the call and waits for the result
     return subprocess.run([sys.executable, args.call_script, wav, args.endpoint]).returncode
 
 

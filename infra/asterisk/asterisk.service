@@ -1,0 +1,15 @@
+# /etc/systemd/system/asterisk.service - Asterisk built from source has no unit of its own
+[Unit]
+Description=Asterisk PBX
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/asterisk -f -U asterisk -G asterisk
+ExecReload=/usr/sbin/asterisk -rx "core reload"
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

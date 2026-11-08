@@ -1,6 +1,8 @@
 # Runbook
 
-Setup from zero on the laptop and the Pi. Steps marked **Built** work today; the rest are **Planned** and depend on code that does not exist yet.
+Setup from zero on the laptop for the planned design. The Pi as actually built is set up with [deployment](deployment/README.md); the Raspberry Pi section below is the original plan.
+
+Originally: setup from zero on the laptop and the Pi. Steps marked **Built** work today; the rest are **Planned** and depend on code that does not exist yet.
 
 ## Laptop
 

@@ -1,6 +1,6 @@
 # Limits and roadmap
 
-## What Dialed In cannot do
+## What Dialed-In cannot do
 
 These apply to the planned design. They are shown in the product.
 

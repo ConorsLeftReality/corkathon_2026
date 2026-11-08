@@ -132,7 +132,7 @@ export function LandingPage() {
       <header className={`${PAGE_GUTTER} flex items-center gap-3 py-5`}>
         <span className="flex items-center gap-2 font-semibold text-ink">
           <IconPhoneCall size={22} aria-hidden />
-          Dialed In
+          Dialed-In
         </span>
         <Link to="/login" className="ml-auto text-label font-semibold">
           Sign in
@@ -150,7 +150,7 @@ export function LandingPage() {
                 Know which companies are about to miss a CRO filing deadline.
               </h1>
               <p className="max-w-xl text-graphite">
-                Dialed In reads the Companies Registration Office&apos;s free daily register and
+                Dialed-In reads the Companies Registration Office&apos;s free daily register and
                 answers plain questions about annual return deadlines: which of your clients to
                 chase this week, and which local companies are already overdue and could use an
                 accountant.

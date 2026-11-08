@@ -1,15 +1,25 @@
 # Telephony
 
-## The live design (Planned)
+## What was built
 
-The phone path that ships today is in [apps/phone](../apps/phone/README.md): speech to text, then answers pre-rendered with Piper from the cro-tracker report. Everything below is the fuller design and is **Planned**. Config blocks are the files we intend to commit under `telephony/`; none exist yet.
+The phone system that runs today differs from the plan below:
+
+| Plan below | Built |
+|---|---|
+| Cisco desk phone on `201`, PoE injector | Cisco DBS-110 DECT base and handset on `1001`, Zoiper softphone on `1002` |
+| Pi LAN `10.10.0.0/24`, dnsmasq | Pi LAN `10.99.99.0/24`, NetworkManager shared mode |
+| Asterisk in Docker | Asterisk 22 built from source, under systemd |
+| FastAGI service in the API | Asterisk runs `infra/phone/transcribe_audio.py` per question; answers pre-rendered with Piper |
+| Linphone fallback | Zoiper over a Tailscale subnet route |
+
+The config is in [infra/asterisk](../infra/asterisk) and [infra/phone](../infra/phone/README.md), and the setup steps are in [deployment](deployment/README.md). The rest of this page is the original plan, kept for the design reasoning, and is **Planned**.
 
 ## Numbers on the phone
 
 | Number | What it is |
 |---|---|
 | `201` | The desk phone's own SIP account |
-| `100` | Dialed In menu |
+| `100` | Dialed-In menu |
 | `199` | Books a morning briefing call in 10 seconds (for testing) |
 
 The plan said "endpoint for ext 100". The phone cannot be both the caller and the number it dials, so the phone registers as `201` and `100` is a dialplan extension.
@@ -263,7 +273,7 @@ Prompts in `telephony/sounds/` (`menu`, `one-moment`, `ask-after-beep`, `invalid
 
 | Prompt | Text |
 |---|---|
-| `menu` | "Dialed In. Press 1 for this week's deadlines. Press 2 for overdue Cork companies. Press 3 to ask a question." |
+| `menu` | "Dialed-In. Press 1 for this week's deadlines. Press 2 for overdue Cork companies. Press 3 to ask a question." |
 | `one-moment` | "One moment, checking the register." |
 | `ask-after-beep` | "Ask your question after the beep." |
 | `invalid` | "Sorry, that is not an option." |
@@ -324,7 +334,7 @@ The phone has no sign-in, so clients mode on the phone reads the list at `RADAR_
 sudo mkdir -p /srv/radar/piper && sudo chown "$USER" /srv/radar/piper
 cd /srv/radar/piper
 # download the linux aarch64 piper release and one voice (.onnx and .onnx.json) here
-echo "Dialed In test." | ./piper/piper --model ./voice.onnx --output_file test.wav
+echo "Dialed-In test." | ./piper/piper --model ./voice.onnx --output_file test.wav
 sox test.wav -r 8000 -c 1 -b 16 test8k.wav
 ```
 
@@ -389,7 +399,7 @@ mkdir -p /var/spool/asterisk/tmp
 tmp="/var/spool/asterisk/tmp/briefing-$$.call"
 cat > "$tmp" <<EOF
 Channel: PJSIP/201
-CallerID: "Dialed In" <100>
+CallerID: "Dialed-In" <100>
 MaxRetries: 1
 RetryTime: 60
 WaitTime: 30

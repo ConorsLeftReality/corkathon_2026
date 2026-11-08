@@ -29,7 +29,7 @@ function Brand() {
       <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-signal text-rim">
         <IconPhoneCall size={14} aria-hidden />
       </span>
-      <SidebarLabel>Dialed In</SidebarLabel>
+      <SidebarLabel>Dialed-In</SidebarLabel>
     </span>
   )
 }
