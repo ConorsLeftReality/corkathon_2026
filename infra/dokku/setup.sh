@@ -2,7 +2,7 @@
 # One-time Dokku setup for both Dialed-In apps on the Pi. Safe to rerun:
 # existing apps, mounts and secrets are left alone.
 # Usage:  sudo bash infra/dokku/setup.sh
-#   corkathon2026  web + api      http://<pi>:9000   storage /var/lib/dokku/data/storage/corkathon2026 -> /data
+#   corkathon2026  web + api      https://<pi>.<tailnet>.ts.net (proxies http://<pi>:9000)   storage /var/lib/dokku/data/storage/corkathon2026 -> /data
 #   cro-tracker    report api     http://<pi>:9001   storage /var/lib/dokku/data/storage/cro-tracker   -> /app/data
 set -euo pipefail
 STORE=/var/lib/dokku/data/storage
@@ -32,10 +32,18 @@ has_config corkathon2026 JWT_SECRET_KEY \
   || dokku config:set --no-restart corkathon2026 JWT_SECRET_KEY="$(openssl rand -hex 32)"
 has_config corkathon2026 TRUSTED_PROXIES \
   || dokku config:set --no-restart corkathon2026 TRUSTED_PROXIES=1
-# reached over plain http on tailscale, so the session cookie cannot be Secure.
-# set COOKIE_SECURE=true yourself once the site is served over https
-has_config corkathon2026 COOKIE_SECURE \
-  || dokku config:set --no-restart corkathon2026 COOKIE_SECURE=false
+# tailscale serve gives the site https on the pi's ts.net name and renews the certificate itself.
+# the timeout stops it waiting forever when https certificates are off in the tailnet
+if timeout 60 tailscale serve --bg --https=443 http://127.0.0.1:9000 >/dev/null; then
+  has_config corkathon2026 COOKIE_SECURE \
+    || dokku config:set --no-restart corkathon2026 COOKIE_SECURE=true
+  echo "https: $(tailscale serve status | head -1)"
+else
+  echo "WARN: no https. Turn on HTTPS Certificates in the Tailscale admin console (DNS page) and rerun"
+  # over plain http the browser drops a Secure session cookie
+  has_config corkathon2026 COOKIE_SECURE \
+    || dokku config:set --no-restart corkathon2026 COOKIE_SECURE=false
+fi
 has_config corkathon2026 ALLOWED_EMAILS || has_config corkathon2026 FILINGS_ALLOWED_EMAILS \
   || echo "WARN: nobody can sign up or sign in until ALLOWED_EMAILS is set:
       sudo dokku config:set corkathon2026 ALLOWED_EMAILS=you@example.com,@clientfirm.ie"

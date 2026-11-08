@@ -9,6 +9,7 @@ flowchart LR
   GH[GitHub Actions] -->|git push over Tailscale| Dokku
   subgraph Pi[Raspberry Pi 3, Pi OS Lite 64-bit]
     Dokku --> Web[corkathon2026<br/>web + api :9000]
+    Serve[Tailscale Serve<br/>https :443] --> Web
     Dokku --> CRO[cro-tracker<br/>report api :9001]
     Ast[Asterisk 22<br/>10.99.99.1:5060] --> Scripts[/opt/dialed-in<br/>CRO Tracker scripts/]
     Scripts -->|API_TOKEN| CRO
