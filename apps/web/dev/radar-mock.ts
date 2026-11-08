@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Plugin } from 'vite'
 
-// dev only stand in for the radar api, the contract lives in docs/02-architecture.md
+// dev only stand in for the radar api, the contract lives in docs/design/02-architecture.md
 // every company here is made up and named Placeholder so nobody mistakes it for register data
 
 type Reply = { status: number; body: unknown; text?: boolean }
@@ -211,7 +211,7 @@ function presetById(id: string): Canned | undefined {
   return Object.hasOwn(PRESETS, id) ? PRESETS[id as keyof typeof PRESETS] : undefined
 }
 
-const SQL = `WITH f AS (... derived fields, see docs/04-question-engine.md ...)
+const SQL = `WITH f AS (... derived fields, see docs/design/04-question-engine.md ...)
 SELECT company_num, company_name, sector_label, routing_key, filing_deadline,
        days_to_deadline, days_overdue, est_penalty_eur, count(*) OVER () AS total
 FROM f

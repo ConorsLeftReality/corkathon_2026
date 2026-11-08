@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 import type { Page, Route } from '@playwright/test'
 import { openApp, signUp } from './session-steps.ts'
 
-// the radar api is not built yet, so these stub it to the contract in docs/02-architecture.md
+// the radar api is not built yet, so these stub it to the contract in docs/design/02-architecture.md
 const ASK = '**/api/radar/ask'
 
 const snapshot = { fetched_at: '2026-11-07T09:12:00Z', newest_reg_date: '2026-11-06', stale: false }

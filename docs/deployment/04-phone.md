@@ -29,20 +29,9 @@ Then run `deploy.sh` again. It prints OK, WARN or FAIL per check and exits with 
 
 To ring another extension, rerun with `sudo MORNING_EXTENSION=1002 bash infra/phone/deploy.sh`. `MORNING_EXTENSION=none` turns the morning call off.
 
-## Moving from the Filing Radar install
+## An older install
 
-The first Pi ran these scripts from `/opt/filing-radar` with the menu in `/etc/asterisk/filing-radar.conf`. To move it across:
-
-```bash
-cd ~/corkathon2026 && git pull
-sudo bash infra/asterisk/install.sh   # installs dialed-in.conf, retires filing-radar.conf
-sudo bash infra/asterisk/make_prompts.sh --force menu sorry   # new menu wording, no old options
-sudo bash infra/phone/deploy.sh       # copies /opt/filing-radar/.env across, removes the old cron file
-```
-
-Call `100`, press `1` twice, and ask a question. When it answers, delete the old folder: `sudo rm -r /opt/filing-radar`.
-
-The new `100` has a top menu, so callers press `1` for CRO Tracker, then `1` to ask a question. The old options 1 (this week's deadlines) and 2 (overdue Cork companies) are gone, so `--force menu sorry` above re-renders the CRO Tracker menu without them. If you used ElevenLabs for the prompts, record `main-menu`, `menu` and `sorry` there too. The old `week` and `overdue-cork` files in `/srv/voip/prerendered_audio/` are no longer played and can be deleted.
+`deploy.sh` and `infra/asterisk/install.sh` also move an install from before the rename (`/opt/filing-radar`, `/etc/asterisk/filing-radar.conf`, `/var/spool/asterisk/radar`) across: they copy its `.env`, retire the old menu and remove its cron file. Re-render the prompts whose wording changed with `sudo bash infra/asterisk/make_prompts.sh --force main-menu menu sorry`, and once a call to `100` works, delete `/opt/filing-radar`. The live Pi was moved this way on 2026-11-08.
 
 ## Test by hand
 

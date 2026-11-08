@@ -4,8 +4,10 @@ Both apps run as Dokku apps built from the repo's Dockerfiles. GitHub Actions pu
 
 | App | Built from | Port | Data on the Pi |
 |---|---|---|---|
-| `corkathon2026` | `Dockerfile` at the repo root (web + api) | `9000` | `/var/lib/dokku/data/storage/corkathon2026` (SQLite, CRO snapshot, client list) |
-| `cro-tracker` | `apps/cro-tracker/Dockerfile` | `9001` | `/var/lib/dokku/data/storage/cro-tracker` (snapshots, reports) |
+| `corkathon2026` | `Dockerfile` at the repo root (web + api) | `9000`, to `5000` in the container | `/var/lib/dokku/data/storage/corkathon2026` mounted at `/data` (SQLite, CRO snapshot) |
+| `cro-tracker` | `apps/cro-tracker/Dockerfile` | `9001`, to `5000` in the container | `/var/lib/dokku/data/storage/cro-tracker` mounted at `/app/data` (snapshots, reports) |
+
+Dokku sets `PORT=5000` inside both containers, which overrides the `5001` default in the root `Dockerfile`.
 
 ## Install Dokku
 
@@ -18,7 +20,15 @@ sudo dphys-swapfile setup && sudo dphys-swapfile swapon
 free -h
 ```
 
-Install Dokku with the bootstrap script from [dokku.com/docs/getting-started/installation](https://dokku.com/docs/getting-started/installation/), using the current version it names. When it asks, skip the web installer. Never use the Herokuish builder on this Pi: it does not run on arm64. The setup script below selects the Dockerfile builder for both apps.
+Install Dokku with the bootstrap script from [dokku.com/docs/getting-started/installation](https://dokku.com/docs/getting-started/installation/), using the current version it names (the live Pi runs 0.38.34). When it asks, skip the web installer. Never use the Herokuish builder on this Pi: it does not run on arm64. The setup script below selects the Dockerfile builder for both apps, so the `gliderlabs/herokuish` image the installer pulls can be removed to save 1.4 GB: `sudo docker image rm $(sudo docker images -q gliderlabs/herokuish)`. Dokku also installs `docker-builder-prune.timer`, which clears the build cache every night at 04:05.
+
+Give Docker its own DNS servers, since builds that use Tailscale's resolver fail to download packages (see [step 1](01-pi.md#tailscale)), and keep containers running while Docker restarts:
+
+```bash
+echo '{ "live-restore": true, "dns": ["1.1.1.1", "8.8.8.8"] }' | sudo tee /etc/docker/daemon.json
+sudo systemctl restart docker
+sudo docker run --rm python:3.14-slim cat /etc/resolv.conf   # shows 1.1.1.1 and 8.8.8.8
+```
 
 ## Create the apps
 
@@ -38,7 +48,22 @@ sudo dokku config:set corkathon2026 ALLOWED_EMAILS=you@example.com,@clientfirm.i
 ## Client lists
 
 - **Site** (`corkathon2026`): each account adds its own clients on the Clients page, by company number or CSV upload. Nothing to copy onto the Pi. An old shared `my_companies.csv` in the storage folder is no longer read; upload it on the Clients page instead.
-- **cro-tracker**: one CSV per client in `apps/cro-tracker/clients/`. The file name is the client id, so `acme.csv` is served at `/api/acme/report`. Commit and push to change them. See [apps/cro-tracker/DEPLOY.md](../../apps/cro-tracker/DEPLOY.md) for the full API.
+- **cro-tracker**: one CSV per client in `apps/cro-tracker/clients/`, each with a `company_num` column. The file name is the client id (lower case letters, digits, `-` and `_`), so `acme.csv` is served at `/api/acme/report`. Commit and push to change them. The repo is public, so only example lists belong there: real client lists would be readable by anyone.
+
+## cro-tracker API
+
+Every route except `GET /api/health` needs `Authorization: Bearer <API_TOKEN>`. Set `ALLOWED_ORIGIN` only if a browser on another origin calls the API; by default no CORS header is sent.
+
+| Request | Returns |
+|---|---|
+| `GET /api/clients` | every client with its counts |
+| `GET /api/<client>/report?status=due,overdue` | full report, optional filter |
+| `GET /api/<client>/companies` | sorted company list |
+| `GET /api/<client>/briefing` | plain-text briefing |
+| `POST /api/<client>/refresh` | rebuild now (all clients) |
+| `/api/report` etc. | same, for `DEFAULT_CLIENT` or the only client |
+
+The daily rebuild runs from the `cron` entry in `apps/cro-tracker/app.json` at 00:05, and the API also rebuilds on the first request of a new day, so the exact time does not matter.
 
 ## After the first deploy (step 5)
 

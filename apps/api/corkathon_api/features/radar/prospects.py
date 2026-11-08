@@ -13,7 +13,7 @@ PENALTY_BASE, PENALTY_PER_DAY, PENALTY_CAP = 100, 3, 1200
 LIMIT = 10
 
 CORK_CITY_KEYS = frozenset({"T12", "T23"})
-# starting list from docs/03-data.md, still to verify against the eircode routing key map
+# starting list from docs/design/03-data.md, still to verify against the eircode routing key map
 CORK_COUNTY_KEYS = CORK_CITY_KEYS | frozenset(
     {
         "T34",

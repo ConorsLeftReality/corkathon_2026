@@ -1,6 +1,6 @@
 # Working in this repo
 
-Rules for the three of us and for any coding agent. `README.md` covers the product and quickstart, `docs/scaffold.md` the scaffold commands and deploy, and `docs/` the Dialed-In design.
+Rules for the three of us and for any coding agent. `README.md` covers the product and quickstart, `docs/scaffold.md` the scaffold commands and deploy, `docs/where-things-live.md` where every file ends up on the Pi, and `docs/design/` the original Dialed-In design.
 
 ## Layout
 

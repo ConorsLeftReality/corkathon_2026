@@ -28,6 +28,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0 (what v4 pointed to on 2026-11-07)
         with:
           fetch-depth: 0 # Dokku rejects pushes from shallow clones
+          persist-credentials: false
 
       - name: Join Tailscale network
         uses: tailscale/github-action@064b10558093f38325e838ddea35486bdc6b1d5c # v4.4.0 (what v4 pointed to on 2026-11-07)

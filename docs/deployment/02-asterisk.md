@@ -2,12 +2,13 @@
 
 ## Build Asterisk 22
 
-Asterisk is not in apt on Bookworm or Trixie, so it is built from source. The compile takes 30 to 60 minutes on a Pi 3 and needs internet.
+Asterisk is not in apt on Bookworm or Trixie, so it is built from source. The compile takes 30 to 60 minutes on a Pi 3 and needs internet. The source stays in `/usr/local/src` afterwards for rebuilds and `make uninstall` (the live Pi has `asterisk-22.11.0`).
 
 ```bash
 sudo apt install -y build-essential wget
-cd ~ && wget https://downloads.asterisk.org/pub/telephony/asterisk/asterisk-22-current.tar.gz
-tar xf asterisk-22-current.tar.gz && cd asterisk-22.*/
+sudo chown "$USER" /usr/local/src && cd /usr/local/src
+wget https://downloads.asterisk.org/pub/telephony/asterisk/asterisk-22-current.tar.gz
+tar xf asterisk-22-current.tar.gz && rm asterisk-22-current.tar.gz && cd asterisk-22.*/
 sudo contrib/scripts/install_prereq install   # asks for a country code: 353
 ./configure --with-jansson-bundled
 make -j2                                       # -j2, not -j4: 1 GB of RAM runs out otherwise
