@@ -26,6 +26,8 @@ RUN useradd --uid 1000 --create-home appuser \
 USER appuser
 
 EXPOSE 5000
+# python alone takes 2 to 3s to start on the pi
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s CMD ["python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:5000/api/health', timeout=5)"]
 
 # One worker keeps memory low on the Pi; threads handle concurrent requests.
 # The daily rebuild runs as a Dokku cron task (see app.json), not a second container.

@@ -20,7 +20,15 @@ sudo dphys-swapfile setup && sudo dphys-swapfile swapon
 free -h
 ```
 
-Install Dokku with the bootstrap script from [dokku.com/docs/getting-started/installation](https://dokku.com/docs/getting-started/installation/), using the current version it names. When it asks, skip the web installer. Never use the Herokuish builder on this Pi: it does not run on arm64. The setup script below selects the Dockerfile builder for both apps.
+Install Dokku with the bootstrap script from [dokku.com/docs/getting-started/installation](https://dokku.com/docs/getting-started/installation/), using the current version it names (the live Pi runs 0.38.34). When it asks, skip the web installer. Never use the Herokuish builder on this Pi: it does not run on arm64. The setup script below selects the Dockerfile builder for both apps, so the `gliderlabs/herokuish` image the installer pulls can be removed to save 1.4 GB: `sudo docker image rm $(sudo docker images -q gliderlabs/herokuish)`. Dokku also installs `docker-builder-prune.timer`, which clears the build cache every night at 04:05.
+
+Give Docker its own DNS servers, since builds that use Tailscale's resolver fail to download packages (see [step 1](01-pi.md#tailscale)), and keep containers running while Docker restarts:
+
+```bash
+echo '{ "live-restore": true, "dns": ["1.1.1.1", "8.8.8.8"] }' | sudo tee /etc/docker/daemon.json
+sudo systemctl restart docker
+sudo docker run --rm python:3.14-slim cat /etc/resolv.conf   # shows 1.1.1.1 and 8.8.8.8
+```
 
 ## Create the apps
 

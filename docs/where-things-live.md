@@ -57,5 +57,9 @@ Both apps are deployed only by GitHub Actions on a push to `main`. The Pi keeps 
 | Path | What it is |
 |---|---|
 | `/etc/docker/daemon.json` | Sets Docker's DNS to `1.1.1.1` and `8.8.8.8`, because builds that used Tailscale's resolver failed to download packages |
-| `/etc/systemd/system/docker-builder-prune.timer` | Clears the Docker build cache so the SD card does not fill |
+| `/etc/docker/daemon.json` `live-restore` | Keeps the app containers running while Docker itself restarts |
+| `/etc/systemd/system/docker-builder-prune.timer` | Installed by Dokku. Clears the Docker build cache at 04:05 so the SD card does not fill |
+| `/etc/dphys-swapfile`, `/var/swap` | 2 GB of swap, so Docker builds are not killed on 906 MiB of RAM |
+| `/etc/NetworkManager/dnsmasq-shared.d/` | `dect.conf` pins the DECT base to `10.99.99.200`; `log.conf` logs DHCP. Written by `infra/pi/network.sh` |
+| `/etc/sysctl.d/99-tailscale.conf` | IP forwarding, so the tailnet can reach the phone LAN through the Pi |
 | `/srv/archive/2026-11-08/` | Old files moved aside during the 2026-11-08 tidy-up, with a `README.txt`. Nothing uses them; delete once you are sure |

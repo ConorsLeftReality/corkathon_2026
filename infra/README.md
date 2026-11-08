@@ -18,7 +18,7 @@ Everything that runs on the Raspberry Pi outside the app containers. The steps t
 
 - `/etc/asterisk/pjsip.conf`: it holds every handset password.
 - `/opt/dialed-in/.env`: it holds the cro-tracker `API_TOKEN`.
-- Real client CSVs if the repo ever goes public.
+- Real client CSVs. The repo is public, so `apps/cro-tracker/clients/` holds examples only.
 
 ## Adding a service to the phone
 
