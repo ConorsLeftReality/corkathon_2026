@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { PASSWORD, signUp, uniqueEmail, signedInAs } from './session-steps.ts'
+import { PASSWORD, openInvite, signUp, uniqueEmail, signedInAs } from './session-steps.ts'
 
 async function expectNoAxeViolations(page: Page) {
   const { violations } = await new AxeBuilder({ page }).analyze()
@@ -34,9 +34,7 @@ test('the notes screen passes axe and fits the viewport', async ({ page }) => {
 
 test('an account can be created with the keyboard alone', async ({ page }) => {
   const email = uniqueEmail()
-  await page.goto('/login')
-  await page.getByRole('button', { name: 'I need an account' }).focus()
-  await page.keyboard.press('Enter')
+  await openInvite(page, email)
   await page.getByLabel('Email').focus()
   await page.keyboard.type(email)
   await page.keyboard.press('Tab')

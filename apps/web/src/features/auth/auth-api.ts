@@ -18,7 +18,7 @@ export async function signIn(credentials: Credentials): Promise<User> {
   return user
 }
 
-export async function register(credentials: Credentials): Promise<User> {
+export async function register(credentials: Credentials & { invite: string }): Promise<User> {
   const options = { method: 'POST', body: credentials } as const
   const { user } = await apiRequest('/api/auth/register', userResponse, options)
   return user

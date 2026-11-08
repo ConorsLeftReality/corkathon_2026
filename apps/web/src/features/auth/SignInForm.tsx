@@ -6,8 +6,11 @@ import type { User } from '#src/features/auth/auth-api.ts'
 
 type Mode = 'sign-in' | 'register'
 
-export function SignInForm({ onSignedIn }: { onSignedIn: (user: User) => void }) {
-  const [mode, setMode] = useState<Mode>('sign-in')
+type Props = { onSignedIn: (user: User) => void; invite: string | null }
+
+export function SignInForm({ onSignedIn, invite }: Props) {
+  const [mode, setMode] = useState<Mode>(invite ? 'register' : 'sign-in')
+  const [askedForAccount, setAskedForAccount] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<ApiError | null>(null)
@@ -21,8 +24,11 @@ export function SignInForm({ onSignedIn }: { onSignedIn: (user: User) => void })
     setSubmitting(true)
     setError(null)
     try {
-      const action = mode === 'sign-in' ? signIn : register
-      onSignedIn(await action({ email, password }))
+      onSignedIn(
+        await (mode === 'register' && invite
+          ? register({ email, password, invite })
+          : signIn({ email, password })),
+      )
     } catch (caught) {
       if (!(caught instanceof ApiError)) throw caught
       setError(caught)
@@ -30,15 +36,13 @@ export function SignInForm({ onSignedIn }: { onSignedIn: (user: User) => void })
     }
   }
 
-  const registering = mode === 'register'
+  const registering = mode === 'register' && invite !== null
 
   return (
     <form className="flex flex-col gap-4 surface p-6" onSubmit={(event) => void submit(event)}>
       <h2 className="text-h2 font-semibold">{registering ? 'Create account' : 'Sign in'}</h2>
       {registering && (
-        <p className="text-graphite">
-          Use the work email your firm has given access to. Other emails cannot sign up.
-        </p>
+        <p className="text-graphite">Use the email your invite was sent to. The link works once.</p>
       )}
 
       <div className="flex flex-col gap-1">
@@ -92,12 +96,18 @@ export function SignInForm({ onSignedIn }: { onSignedIn: (user: User) => void })
         className="button-quiet"
         type="button"
         onClick={() => {
-          setMode(registering ? 'sign-in' : 'register')
+          if (invite) setMode(registering ? 'sign-in' : 'register')
+          else setAskedForAccount(true)
           setError(null)
         }}
       >
         {registering ? 'I already have an account' : 'I need an account'}
       </button>
+      {askedForAccount && !registering && (
+        <p role="status" className="text-graphite">
+          Accounts are by invite only. Ask your admin for an invite link.
+        </p>
+      )}
     </form>
   )
 }
