@@ -30,6 +30,6 @@ Rules for the three of us and for any coding agent. `README.md` covers the produ
 - No em dashes, en dashes or emoji anywhere. `bun run lint` enforces this along with the banned words in `scripts/slop-words.txt`.
 - Comments are rare, one lowercase line, and say why.
 - Commits are `type(scope): lowercase subject`, 60 characters at most. Scopes are `web`, `api` and `repo`.
-- No AI attribution in commits or PRs: no co-author trailer, no "Generated with" footer.
+- Commits and PRs written by a coding agent may be authored by and attributed to it.
 
 `bun run check` must pass before anything is pushed.
