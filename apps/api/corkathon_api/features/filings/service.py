@@ -49,6 +49,8 @@ class FilingsService:
         self.background = background
         self.lock = threading.Lock()
         self.preparing = False
+        # waitress serves on several threads and two builds would share one .part file
+        self.build_lock = threading.Lock()
 
     def snapshot_path(self, day: date) -> Path:
         return self.data_dir / f"cro_companies_{day.isoformat()}.csv.zip"
@@ -95,16 +97,17 @@ class FilingsService:
                 self.preparing = False
 
     def prepare(self, day: date) -> None:
-        snapshot = self.snapshot_path(day)
-        if not snapshot.exists():
-            self.download(snapshot)
-        index = self.index_path(day)
-        if not index.exists():
-            build_index(iter_snapshot_rows(snapshot), index)
-        for pattern in ("cro_companies_*.csv.zip", "cro_register_*.sqlite"):
-            for old in self.data_dir.glob(pattern):
-                if old not in (snapshot, index):
-                    old.unlink(missing_ok=True)
+        with self.build_lock:
+            snapshot = self.snapshot_path(day)
+            if not snapshot.exists():
+                self.download(snapshot)
+            index = self.index_path(day)
+            if not index.exists():
+                build_index(iter_snapshot_rows(snapshot), index)
+            for pattern in ("cro_companies_*.csv.zip", "cro_register_*.sqlite"):
+                for old in self.data_dir.glob(pattern):
+                    if old not in (snapshot, index):
+                        old.unlink(missing_ok=True)
 
     def report_for(self, numbers: set[str]) -> Report:
         day = self.today()
