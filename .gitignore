@@ -18,3 +18,6 @@ cro_companies_*.csv.zip
 
 # local planning notes, docs/ is the source of truth
 PLAN.md
+
+# machine details for the pi, kept out of the public repo
+CLAUDE.local.md

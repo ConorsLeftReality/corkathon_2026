@@ -24,7 +24,7 @@ A map of the repo and of the Raspberry Pi, and how one turns into the other. For
 
 ## The Pi
 
-Reach it with `ssh dialed-in-pi` (user `pi`, Tailscale `<pi tailscale ip>`). It runs Debian 12 arm64 on 906 MiB of RAM and a 29 GB SD card.
+Reach it by SSH over Tailscale: `ssh <user>@<pi tailscale ip>`. It runs Debian 12 arm64 on 906 MiB of RAM and a 29 GB SD card.
 
 ### Apps (Dokku)
 
